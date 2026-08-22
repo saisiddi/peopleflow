@@ -1,0 +1,498 @@
+"""Dayflow HRMS — FastAPI backend (hackathon build).
+
+Auth is delegated to Supabase Auth: the frontend signs in with supabase-js
+and sends the user's access token as a Bearer token. We validate it by
+calling supabase.auth.get_user(token) and load the matching profile row.
+All DB access uses the service-role key (backend is the trust boundary).
+"""
+import os
+import threading
+import time
+from datetime import date, datetime, timedelta, timezone
+from math import atan2, cos, radians, sin, sqrt
+from typing import Optional
+
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException, Header
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from supabase import create_client
+
+load_dotenv()
+
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+GRACE_MINUTES = int(os.environ.get("GEOFENCE_EXIT_GRACE_MINUTES", "15"))
+
+sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+app = FastAPI(title="Dayflow HRMS API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # hackathon: lock down post-demo
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ---------- helpers ----------
+
+def haversine_distance(lat1, lng1, lat2, lng2):
+    R = 6371000  # Earth radius in meters
+    phi1, phi2 = radians(lat1), radians(lat2)
+    d_phi = radians(lat2 - lat1)
+    d_lambda = radians(lng2 - lng1)
+    a = sin(d_phi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(d_lambda / 2) ** 2
+    return R * 2 * atan2(sqrt(a), sqrt(1 - a))
+
+
+def get_current_user(authorization: str = Header(...)) -> dict:
+    """Validate Supabase JWT and return (user, profile)."""
+    token = authorization.replace("Bearer ", "")
+    try:
+        resp = sb.auth.get_user(token)
+    except Exception:
+        raise HTTPException(401, "Invalid or expired token")
+    if not resp.user:
+        raise HTTPException(401, "Invalid or expired token")
+    profile = (
+        sb.table("profiles").select("*").eq("id", resp.user.id).single().execute()
+    ).data
+    if not profile:
+        raise HTTPException(403, "No profile for user")
+    profile["access_token"] = token
+    return profile
+
+
+def require_admin(user: dict) -> dict:
+    if user["role"] != "admin":
+        raise HTTPException(403, "Admin only")
+    return user
+
+
+def get_or_create_attendance(employee_id: str, day: date) -> dict:
+    row = (
+        sb.table("attendance")
+        .select("*")
+        .eq("employee_id", employee_id)
+        .eq("date", day.isoformat())
+        .maybe_single()
+        .execute()
+    )
+    if row.data:
+        return row.data
+    created = (
+        sb.table("attendance")
+        .insert({"employee_id": employee_id, "date": day.isoformat(), "status": "absent"})
+        .execute()
+    )
+    return created.data[0]
+
+
+def get_office() -> dict:
+    return (sb.table("office_location").select("*").eq("id", 1).single().execute()).data
+
+
+def finalize_stale_pending_exits() -> int:
+    """Server-side safety net: close out pending_exit rows past the grace window."""
+    office = get_office()
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=GRACE_MINUTES)
+    rows = (
+        sb.table("attendance")
+        .select("*")
+        .eq("status", "pending_exit")
+        .lt("left_geofence_at", cutoff.isoformat())
+        .execute()
+    ).data
+    for r in rows:
+        sb.table("attendance").update(
+            {"exit_time": r["left_geofence_at"], "status": "present"}
+        ).eq("id", r["id"]).execute()
+    return len(rows)
+
+
+# ---------- schemas ----------
+
+class SignUpIn(BaseModel):
+    email: str
+    password: str
+    full_name: str
+    employee_id: str
+    role: str = "employee"  # 'employee' | 'admin' (demo convenience)
+
+
+class ProfilePatch(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    job_title: Optional[str] = None
+    department: Optional[str] = None
+    employee_id: Optional[str] = None
+
+
+class EntrySimulateIn(BaseModel):
+    employee_id: str
+
+
+class GeofencePingIn(BaseModel):
+    lat: float
+    lng: float
+
+
+class LeaveApplyIn(BaseModel):
+    leave_type: str  # paid | sick | unpaid
+    start_date: date
+    end_date: date
+    remarks: Optional[str] = None
+
+
+class LeaveReviewIn(BaseModel):
+    status: str  # approved | rejected
+    admin_comment: Optional[str] = None
+
+
+class PayrollPatch(BaseModel):
+    base_salary: Optional[float] = None
+    allowances: Optional[float] = None
+    deductions: Optional[float] = None
+
+
+# ---------- auth ----------
+
+@app.post("/auth/signup")
+def signup(body: SignUpIn):
+    if body.role not in ("employee", "admin"):
+        raise HTTPException(400, "role must be employee or admin")
+    try:
+        resp = sb.auth.admin.create_user(
+            {
+                "email": body.email,
+                "password": body.password,
+                "email_confirm": True,  # demo: skip email verification wait
+                "user_metadata": {"full_name": body.full_name},
+            }
+        )
+    except Exception as e:
+        raise HTTPException(400, f"Signup failed: {e}")
+    uid = resp.user.id
+    sb.table("profiles").update(
+        {
+            "employee_id": body.employee_id,
+            "full_name": body.full_name,
+            "role": body.role,
+        }
+    ).eq("id", uid).execute()
+    # seed a payroll row for the current month
+    now = datetime.now()
+    sb.table("payroll").insert(
+        {
+            "employee_id": uid,
+            "base_salary": 50000,
+            "allowances": 5000,
+            "deductions": 2000,
+            "net_salary": 53000,
+            "month": now.strftime("%B"),
+            "year": now.year,
+        }
+    ).execute()
+    return {"id": uid, "message": "Signed up. You can now sign in."}
+
+
+# ---------- profiles ----------
+
+@app.get("/profiles/me")
+def my_profile(user: dict = Depends(get_current_user)):
+    user.pop("access_token", None)
+    return user
+
+
+@app.patch("/profiles/me")
+def patch_my_profile(body: ProfilePatch, user: dict = Depends(get_current_user)):
+    # employees may only touch these fields
+    allowed = {"phone", "address", "profile_picture_url"}
+    data = body.dict(exclude_none=True)
+    if user["role"] != "admin":
+        data = {k: v for k, v in data.items() if k in allowed}
+    sb.table("profiles").update(data).eq("id", user["id"]).execute()
+    return {"ok": True}
+
+
+@app.get("/profiles")
+def list_profiles(user: dict = Depends(require_admin)):
+    return sb.table("profiles").select("*").order("full_name").execute().data
+
+
+@app.get("/profiles/{profile_id}")
+def get_profile(profile_id: str, user: dict = Depends(require_admin)):
+    return sb.table("profiles").select("*").eq("id", profile_id).single().execute().data
+
+
+@app.patch("/profiles/{profile_id}")
+def patch_profile(profile_id: str, body: ProfilePatch, user: dict = Depends(require_admin)):
+    data = body.dict(exclude_none=True)
+    sb.table("profiles").update(data).eq("id", profile_id).execute()
+    return {"ok": True}
+
+
+# ---------- attendance ----------
+
+@app.post("/attendance/entry-simulate")
+def simulate_entry(body: EntrySimulateIn, user: dict = Depends(require_admin)):
+    """Demo stand-in for the company's existing fingerprint scanner webhook."""
+    row = get_or_create_attendance(body.employee_id, date.today())
+    now = datetime.now(timezone.utc)
+    sb.table("attendance").update(
+        {
+            "entry_time": now.isoformat(),
+            "entry_source": "fingerprint_simulated",
+            "status": "present",
+            "last_seen_inside_geofence_at": now.isoformat(),
+        }
+    ).eq("id", row["id"]).execute()
+    return {"ok": True, "message": "Fingerprint entry recorded"}
+
+
+@app.post("/attendance/geofence-ping")
+def geofence_ping(body: GeofencePingIn, user: dict = Depends(get_current_user)):
+    """Employee browser polls us with its GPS position every ~60-90s."""
+    office = get_office()
+    dist = haversine_distance(body.lat, body.lng, office["lat"], office["lng"])
+    inside = dist <= office["radius_meters"]
+    now = datetime.now(timezone.utc)
+    row = get_or_create_attendance(user["id"], date.today())
+
+    update = {"last_seen_lat": body.lat, "last_seen_lng": body.lng}
+
+    if not row.get("entry_time"):
+        # no entry yet — nothing to track
+        sb.table("attendance").update(update).eq("id", row["id"]).execute()
+        return {"state": "not_checked_in", "distance_m": round(dist)}
+
+    if inside:
+        update["last_seen_inside_geofence_at"] = now.isoformat()
+        if row["status"] == "pending_exit":
+            # came back inside before the grace timer expired — false alarm
+            update["status"] = "present"
+            update["left_geofence_at"] = None
+            sb.table("attendance").update(update).eq("id", row["id"]).execute()
+            return {"state": "present", "distance_m": round(dist), "returned": True}
+        sb.table("attendance").update(update).eq("id", row["id"]).execute()
+        return {"state": "present", "distance_m": round(dist)}
+
+    # outside the geofence
+    if row.get("exit_time"):
+        return {"state": "checked_out", "distance_m": round(dist)}
+
+    if row["status"] != "pending_exit":
+        # first outside reading — start the grace timer
+        update["status"] = "pending_exit"
+        update["left_geofence_at"] = now.isoformat()
+        sb.table("attendance").update(update).eq("id", row["id"]).execute()
+        return {
+            "state": "pending_exit",
+            "distance_m": round(dist),
+            "grace_minutes": GRACE_MINUTES,
+            "confirm_by": (now + timedelta(minutes=GRACE_MINUTES)).isoformat(),
+        }
+
+    # already pending — check if grace window has elapsed
+    left_at = datetime.fromisoformat(row["left_geofence_at"])
+    if left_at.tzinfo is None:
+        left_at = left_at.replace(tzinfo=timezone.utc)
+    if now - left_at >= timedelta(minutes=GRACE_MINUTES):
+        sb.table("attendance").update(
+            {"exit_time": left_at.isoformat(), "status": "present"}
+        ).eq("id", row["id"]).execute()
+        return {"state": "checked_out", "distance_m": round(dist), "exit_time": left_at.isoformat()}
+    return {
+        "state": "pending_exit",
+        "distance_m": round(dist),
+        "grace_minutes": GRACE_MINUTES,
+        "confirm_by": (left_at + timedelta(minutes=GRACE_MINUTES)).isoformat(),
+    }
+
+
+@app.get("/attendance/me")
+def my_attendance(user: dict = Depends(get_current_user)):
+    return (
+        sb.table("attendance")
+        .select("*")
+        .eq("employee_id", user["id"])
+        .order("date", desc=True)
+        .limit(30)
+        .execute()
+        .data
+    )
+
+
+@app.get("/attendance/all")
+def all_attendance(user: dict = Depends(require_admin)):
+    return (
+        sb.table("attendance")
+        .select("*, profiles(full_name, employee_id)")
+        .order("date", desc=True)
+        .limit(200)
+        .execute()
+        .data
+    )
+
+
+@app.get("/attendance/{employee_id}")
+def employee_attendance(employee_id: str, user: dict = Depends(require_admin)):
+    return (
+        sb.table("attendance")
+        .select("*")
+        .eq("employee_id", employee_id)
+        .order("date", desc=True)
+        .limit(30)
+        .execute()
+        .data
+    )
+
+
+@app.post("/attendance/finalize-pending")
+def finalize_pending(user: dict = Depends(require_admin)):
+    n = finalize_stale_pending_exits()
+    return {"finalized": n}
+
+
+# ---------- leave ----------
+
+@app.post("/leave/apply")
+def apply_leave(body: LeaveApplyIn, user: dict = Depends(get_current_user)):
+    if body.leave_type not in ("paid", "sick", "unpaid"):
+        raise HTTPException(400, "Invalid leave type")
+    if body.end_date < body.start_date:
+        raise HTTPException(400, "end_date before start_date")
+    sb.table("leave_requests").insert(
+        {
+            "employee_id": user["id"],
+            "leave_type": body.leave_type,
+            "start_date": body.start_date.isoformat(),
+            "end_date": body.end_date.isoformat(),
+            "remarks": body.remarks,
+            "status": "pending",
+        }
+    ).execute()
+    return {"ok": True}
+
+
+@app.get("/leave/me")
+def my_leaves(user: dict = Depends(get_current_user)):
+    return (
+        sb.table("leave_requests")
+        .select("*")
+        .eq("employee_id", user["id"])
+        .order("created_at", desc=True)
+        .execute()
+        .data
+    )
+
+
+@app.get("/leave/all")
+def all_leaves(user: dict = Depends(require_admin)):
+    return (
+        sb.table("leave_requests")
+        .select("*, profiles(full_name, employee_id)")
+        .order("created_at", desc=True)
+        .execute()
+        .data
+    )
+
+
+@app.patch("/leave/{leave_id}/review")
+def review_leave(leave_id: str, body: LeaveReviewIn, user: dict = Depends(require_admin)):
+    if body.status not in ("approved", "rejected"):
+        raise HTTPException(400, "status must be approved or rejected")
+    lr = (
+        sb.table("leave_requests").select("*").eq("id", leave_id).single().execute()
+    ).data
+    sb.table("leave_requests").update(
+        {
+            "status": body.status,
+            "admin_comment": body.admin_comment,
+            "reviewed_by": user["id"],
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    ).eq("id", leave_id).execute()
+
+    # approved leave marks attendance rows as on_leave for the range
+    if body.status == "approved":
+        d = date.fromisoformat(lr["start_date"])
+        end = date.fromisoformat(lr["end_date"])
+        while d <= end:
+            row = get_or_create_attendance(lr["employee_id"], d)
+            sb.table("attendance").update({"status": "on_leave"}).eq("id", row["id"]).execute()
+            d += timedelta(days=1)
+    return {"ok": True}
+
+
+# ---------- payroll ----------
+
+@app.get("/payroll/me")
+def my_payroll(user: dict = Depends(get_current_user)):
+    now = datetime.now()
+    return (
+        sb.table("payroll")
+        .select("*")
+        .eq("employee_id", user["id"])
+        .eq("year", now.year)
+        .order("created_at", desc=True)
+        .execute()
+        .data
+    )
+
+
+@app.get("/payroll/{employee_id}")
+def employee_payroll(employee_id: str, user: dict = Depends(require_admin)):
+    return (
+        sb.table("payroll")
+        .select("*, profiles(full_name, employee_id)")
+        .eq("employee_id", employee_id)
+        .order("year", desc=True)
+        .execute()
+        .data
+    )
+
+
+@app.patch("/payroll/{employee_id}")
+def patch_payroll(employee_id: str, body: PayrollPatch, user: dict = Depends(require_admin)):
+    rows = sb.table("payroll").select("*").eq("employee_id", employee_id).execute().data
+    if not rows:
+        raise HTTPException(404, "No payroll row — seed one first")
+    row = rows[0]
+    base = body.base_salary if body.base_salary is not None else float(row["base_salary"] or 0)
+    allow = body.allowances if body.allowances is not None else float(row["allowances"] or 0)
+    ded = body.deductions if body.deductions is not None else float(row["deductions"] or 0)
+    sb.table("payroll").update(
+        {
+            "base_salary": base,
+            "allowances": allow,
+            "deductions": ded,
+            "net_salary": base + allow - ded,
+            "updated_by": user["id"],
+        }
+    ).eq("id", row["id"]).execute()
+    return {"ok": True, "net_salary": base + allow - ded}
+
+
+# ---------- background finalize loop (cron substitute for the demo) ----------
+
+def _finalize_loop():
+    while True:
+        try:
+            finalize_stale_pending_exits()
+        except Exception:
+            pass
+        time.sleep(300)  # every 5 min
+
+
+@app.on_event("startup")
+def start_background():
+    threading.Thread(target=_finalize_loop, daemon=True).start()
+
+
+@app.get("/health")
+def health():
+    return {"ok": True, "service": "dayflow-api"}
