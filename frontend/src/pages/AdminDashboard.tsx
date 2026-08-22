@@ -40,6 +40,15 @@ export default function AdminDashboard() {
       e.employee_id?.toLowerCase().includes(search.toLowerCase())
   )
 
+  const fmtTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+
+  // today's attendance row per employee — drives the ✓ checked-in state
+  const today = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD, local time
+  const todayByEmployee = new Map(
+    attendance.filter((a) => a.date === today).map((a) => [a.employee_id, a])
+  )
+
   const simulatePunch = async (employeeId: string, name: string) => {
     await api('/attendance/entry-simulate', {
       method: 'POST',
@@ -78,23 +87,42 @@ export default function AdminDashboard() {
             <Input placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} className="!w-40" />
           </div>
           <ul className="divide-y divide-slate-50 max-h-72 overflow-auto">
-            {filtered.map((e) => (
-              <li key={e.id} className="py-2.5 flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-sm font-medium text-slate-700">{e.full_name || e.email}</p>
-                  <p className="text-xs text-slate-400">{e.employee_id} · {e.role === 'admin' ? 'Admin' : 'Employee'}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Link to={`/admin/employee/${e.id}`}
-                    className="px-4 py-2 rounded-xl text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition">
-                    View
-                  </Link>
-                  <Button variant="ghost" onClick={() => simulatePunch(e.id, e.full_name)}>
-                    Simulate Fingerprint Punch
-                  </Button>
-                </div>
-              </li>
-            ))}
+            {filtered.map((e) => {
+              const att = todayByEmployee.get(e.id)
+              return (
+                <li key={e.id} className="py-2.5 flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">{e.full_name || e.email}</p>
+                    <p className="text-xs text-slate-400">{e.employee_id} · {e.role === 'admin' ? 'Admin' : 'Employee'}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {att?.entry_time ? (
+                      <>
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+                          att.exit_time ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'
+                        }`}>
+                          <span className={att.exit_time ? '' : 'animate-pulse'}>✓</span>
+                          {att.exit_time
+                            ? `Entered ${fmtTime(att.entry_time)} · exited ${fmtTime(att.exit_time)}`
+                            : `Checked in ${fmtTime(att.entry_time)}`}
+                        </span>
+                        <Button variant="ghost" onClick={() => simulatePunch(e.id, e.full_name)}>
+                          Re-punch
+                        </Button>
+                      </>
+                    ) : (
+                      <Button variant="ghost" onClick={() => simulatePunch(e.id, e.full_name)}>
+                        Simulate Fingerprint Punch
+                      </Button>
+                    )}
+                    <Link to={`/admin/employee/${e.id}`}
+                      className="px-4 py-2 rounded-xl text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition">
+                      View
+                    </Link>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         </Card>
 

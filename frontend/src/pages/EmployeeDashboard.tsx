@@ -90,7 +90,16 @@ export default function EmployeeDashboard() {
       </Card>
 
       <Card>
-        <h2 className="font-semibold text-slate-800 mb-3">My leave status <span className="text-xs font-normal text-slate-400">(live)</span></h2>
+        <h2 className="font-semibold text-slate-800 mb-3">
+          My leave status <span className="text-xs font-normal text-slate-400">(live)</span>
+        </h2>
+        {leaves.length > 0 && (
+          <div className="flex gap-2 mb-3 text-xs">
+            <span className="px-2 py-1 rounded-full bg-amber-50 text-amber-700 font-medium">{leaves.filter((l) => l.status === 'pending').length} pending</span>
+            <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 font-medium">{leaves.filter((l) => l.status === 'approved').length} approved</span>
+            <span className="px-2 py-1 rounded-full bg-rose-50 text-rose-700 font-medium">{leaves.filter((l) => l.status === 'rejected').length} rejected</span>
+          </div>
+        )}
         {leaves.length === 0 ? (
           <p className="text-sm text-slate-400">No leave requests yet.</p>
         ) : (

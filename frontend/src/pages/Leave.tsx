@@ -53,6 +53,30 @@ export default function Leave() {
 
   const shown = filter === 'all' ? rows : rows.filter((r) => r.status === filter)
 
+  const days = (l: LeaveRow) =>
+    Math.round((new Date(l.end_date).getTime() - new Date(l.start_date).getTime()) / 86400000) + 1
+  const stat = (s: string) => rows.filter((r) => r.status === s).length
+  const approvedDays = rows.filter((r) => r.status === 'approved').reduce((sum, l) => sum + days(l), 0)
+
+  // per-employee breakdown (admin view)
+  const byEmployee = rows.reduce<Record<string, { name: string; total: number; pending: number; approved: number; rejected: number; days: number }>>((acc, l) => {
+    const key = l.employee_id
+    const name = l.profiles?.full_name || key.slice(0, 8)
+    acc[key] ||= { name, total: 0, pending: 0, approved: 0, rejected: 0, days: 0 }
+    acc[key].total++
+    acc[key][l.status as 'pending' | 'approved' | 'rejected']++
+    if (l.status === 'approved') acc[key].days += days(l)
+    return acc
+  }, {})
+
+  const statCards = [
+    ['Total requests', String(rows.length), 'text-slate-800'],
+    ['Pending', String(stat('pending')), 'text-amber-600'],
+    ['Approved', String(stat('approved')), 'text-emerald-600'],
+    ['Rejected', String(stat('rejected')), 'text-rose-600'],
+    ['Approved days off', String(approvedDays), 'text-indigo-600'],
+  ]
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-slate-800">Leave & Time-Off</h1>
@@ -83,6 +107,46 @@ export default function Leave() {
             </div>
           </form>
           {msg && <p className="text-sm text-indigo-600 mt-2">{msg}</p>}
+        </Card>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        {statCards.map(([label, value, color]) => (
+          <Card key={label} className="text-center !py-4">
+            <p className={`text-2xl font-bold ${color}`}>{value}</p>
+            <p className="text-xs text-slate-400 mt-0.5">{label}</p>
+          </Card>
+        ))}
+      </div>
+
+      {isAdmin && (
+        <Card>
+          <h2 className="font-semibold text-slate-800 mb-3">Leave record by employee</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-slate-400 uppercase tracking-wide">
+                  <th className="pb-2">Employee</th><th className="pb-2">Total</th><th className="pb-2">Pending</th>
+                  <th className="pb-2">Approved</th><th className="pb-2">Rejected</th><th className="pb-2">Days approved</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {Object.values(byEmployee).sort((a, b) => b.total - a.total).map((s) => (
+                  <tr key={s.name}>
+                    <td className="py-2 font-medium text-slate-700">{s.name}</td>
+                    <td className="py-2 text-slate-600">{s.total}</td>
+                    <td className="py-2 text-amber-600">{s.pending || '—'}</td>
+                    <td className="py-2 text-emerald-600">{s.approved || '—'}</td>
+                    <td className="py-2 text-rose-600">{s.rejected || '—'}</td>
+                    <td className="py-2 font-medium text-indigo-600">{s.days || '—'}</td>
+                  </tr>
+                ))}
+                {Object.keys(byEmployee).length === 0 && (
+                  <tr><td colSpan={6} className="py-4 text-slate-400">No leave requests yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 
