@@ -61,6 +61,16 @@ export default function AdminDashboard() {
 
       {msg && <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2">{msg}</p>}
 
+      <div className="flex justify-end">
+        <Button variant="ghost" onClick={async () => {
+          const r = await api<{ finalized: number }>('/attendance/finalize-pending', { method: 'POST' })
+          setMsg(`Finalized ${r.finalized} pending exit(s) — server-side safety net`)
+          load()
+        }}>
+          Run exit-finalizer now (normally every 5 min)
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <div className="flex items-center justify-between mb-3">
@@ -74,9 +84,15 @@ export default function AdminDashboard() {
                   <p className="text-sm font-medium text-slate-700">{e.full_name || e.email}</p>
                   <p className="text-xs text-slate-400">{e.employee_id} · {e.role === 'admin' ? 'Admin' : 'Employee'}</p>
                 </div>
-                <Button variant="ghost" onClick={() => simulatePunch(e.id, e.full_name)}>
-                  Simulate Fingerprint Punch
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Link to={`/admin/employee/${e.id}`}
+                    className="px-4 py-2 rounded-xl text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition">
+                    View
+                  </Link>
+                  <Button variant="ghost" onClick={() => simulatePunch(e.id, e.full_name)}>
+                    Simulate Fingerprint Punch
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>

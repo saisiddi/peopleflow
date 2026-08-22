@@ -22,7 +22,7 @@ export default function Payroll() {
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
-    api<PayrollRow[]>(isAdmin ? '/payroll/me' : '/payroll/me').then(setRows).catch(() => {})
+    api<PayrollRow[]>('/payroll/me').then(setRows).catch(() => {})
     if (isAdmin) api('/profiles').then(setEmployees).catch(() => {})
   }, [isAdmin])
 
@@ -100,9 +100,14 @@ export default function Payroll() {
                   <Input type="number" value={edit.allowances} onChange={(e) => setEdit({ ...edit, allowances: e.target.value })} /></div>
                 <div><label className="text-xs text-slate-400">Deductions</label>
                   <Input type="number" value={edit.deductions} onChange={(e) => setEdit({ ...edit, deductions: e.target.value })} /></div>
-                <div className="sm:col-span-3 flex items-center gap-3">
+                <div className="sm:col-span-3 flex items-center gap-3 flex-wrap">
                   <Button onClick={save}>Save</Button>
                   <Badge color="indigo">Net = base + allowances − deductions</Badge>
+                  <span className="text-sm text-slate-500">
+                    Net: <strong className="text-indigo-600">
+                      {fmt((parseFloat(edit.base_salary) || 0) + (parseFloat(edit.allowances) || 0) - (parseFloat(edit.deductions) || 0))}
+                    </strong>
+                  </span>
                   {msg && <span className="text-sm text-emerald-600">{msg}</span>}
                 </div>
               </div>

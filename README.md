@@ -39,10 +39,11 @@ npm run dev
 ```
 
 ### Demo flow
-1. Sign up an Admin account (choose "Admin / HR" on the sign-up form) and an Employee account
+1. Sign up an Admin account (choose "Admin / HR" + the admin signup code from `backend/.env`, default `dayflow-hr-admin`) and an Employee account — or use **Continue with Google** for employee sign-in (enable the Google provider in Supabase → Authentication → Providers with your Google Cloud OAuth credentials, redirect URI `https://<project>.supabase.co/auth/v1/callback`)
 2. Admin → Overview → "Simulate Fingerprint Punch" for the employee (= production biometric webhook)
-3. Employee dashboard shows live state: Present → walk away (or spoof GPS in dev tools) → *Pending exit* pulsing amber → auto *Checked out* after the grace window
-4. Employee applies for leave → admin approves → employee's dashboard updates instantly (no refresh)
+3. Employee dashboard shows live state: Present → walk away (or spoof GPS in dev tools) → *Pending exit* pulsing amber → auto *Checked out* after the grace window; leaving before 4 worked hours marks a **half day**
+4. Employee applies for leave → admin approves → employee's dashboard updates instantly (no refresh) and approved dates are auto-marked `on_leave` in attendance
+5. Admin → any employee → **View** for their full profile, attendance history, and payroll editor with live net-salary preview
 
 ## Status
 

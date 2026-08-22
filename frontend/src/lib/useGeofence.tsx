@@ -10,11 +10,14 @@ export type GeofenceState = {
 }
 
 /**
- * Polls the employee's GPS position every 75s while the tab is visible
- * and reports it to the backend, which runs the geofence exit logic.
+ * Polls the employee's GPS position while the tab is visible and reports it
+ * to the backend, which runs the geofence exit logic. Polls faster (25s)
+ * while a pending exit is being confirmed so a "returned inside" reading
+ * cancels it promptly — and a real exit finalizes without waiting a full cycle.
  */
-export function useGeofence(enabled: boolean, intervalMs = 75000) {
+export function useGeofence(enabled: boolean) {
   const [gf, setGf] = useState<GeofenceState>({ state: 'no_data' })
+  const stateRef = useRef<GeofenceState>({ state: 'no_data' })
   const timer = useRef<number | null>(null)
 
   useEffect(() => {
@@ -26,9 +29,11 @@ export function useGeofence(enabled: boolean, intervalMs = 75000) {
           method: 'POST',
           body: JSON.stringify({ lat, lng }),
         })
+        stateRef.current = res
         setGf(res)
       } catch (e: any) {
-        setGf({ state: 'no_data', error: e.message })
+        stateRef.current = { state: 'no_data', error: e.message }
+        setGf(stateRef.current)
       }
     }
 
@@ -41,15 +46,19 @@ export function useGeofence(enabled: boolean, intervalMs = 75000) {
       )
     }
 
+    const schedule = () => {
+      const delay = stateRef.current.state === 'pending_exit' ? 25000 : 75000
+      timer.current = window.setTimeout(() => { locate(); schedule() }, delay)
+    }
     locate()
-    timer.current = window.setInterval(locate, intervalMs)
+    schedule()
     const onVisible = () => { if (!document.hidden) locate() }
     document.addEventListener('visibilitychange', onVisible)
     return () => {
-      if (timer.current) clearInterval(timer.current)
+      if (timer.current) clearTimeout(timer.current)
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [enabled, intervalMs])
+  }, [enabled])
 
   return gf
 }

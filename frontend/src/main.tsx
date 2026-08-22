@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './lib/store'
 import Auth from './pages/Auth'
 import EmployeeDashboard from './pages/EmployeeDashboard'
 import AdminDashboard from './pages/AdminDashboard'
+import EmployeeDetail from './pages/EmployeeDetail'
 import Attendance from './pages/Attendance'
 import Leave from './pages/Leave'
 import ProfilePage from './pages/ProfilePage'
@@ -36,6 +37,7 @@ function AppRoutes() {
       />
       <Route path="/dashboard" element={<Protected><Layout><EmployeeDashboard /></Layout></Protected>} />
       <Route path="/admin" element={<Protected adminOnly><Layout><AdminDashboard /></Layout></Protected>} />
+      <Route path="/admin/employee/:id" element={<Protected adminOnly><Layout><EmployeeDetail /></Layout></Protected>} />
       <Route path="/attendance" element={<Protected><Layout><Attendance /></Layout></Protected>} />
       <Route path="/leave" element={<Protected><Layout><Leave /></Layout></Protected>} />
       <Route path="/profile" element={<Protected><Layout><ProfilePage /></Layout></Protected>} />

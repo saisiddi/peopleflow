@@ -10,7 +10,7 @@ type AttRow = { date: string; status: string; entry_time: string | null; exit_ti
 
 export default function EmployeeDashboard() {
   const { profile } = useAuth()
-  const gf = useGeofence(true)
+  const gf = useGeofence(profile?.role === 'employee')
   const [leaves, setLeaves] = useState<LeaveRow[]>([])
   const [attendance, setAttendance] = useState<AttRow[]>([])
 
@@ -40,20 +40,22 @@ export default function EmployeeDashboard() {
         <p className="text-slate-500 text-sm">{profile?.job_title || 'Employee'}{profile?.department ? ` · ${profile.department}` : ''}</p>
       </div>
 
-      <Card className="!bg-gradient-to-r !from-indigo-600 !to-indigo-500 !border-0">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <p className="text-indigo-100 text-xs uppercase tracking-wider font-semibold">Live attendance</p>
-            <div className="mt-2 [&_span]:!text-white">
-              <GeofenceIndicator gf={gf} />
+      {profile?.role === 'employee' && (
+        <Card className="!bg-gradient-to-r !from-indigo-600 !to-indigo-500 !border-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-indigo-100 text-xs uppercase tracking-wider font-semibold">Live attendance</p>
+              <div className="mt-2 [&_span]:!text-white">
+                <GeofenceIndicator gf={gf} />
+              </div>
+              {gf.error && <p className="text-xs text-indigo-200 mt-1">{gf.error}</p>}
             </div>
-            {gf.error && <p className="text-xs text-indigo-200 mt-1">{gf.error}</p>}
+            <p className="text-indigo-200 text-xs max-w-xs">
+              Exit is detected automatically via GPS geofencing — no check-out button to forget.
+            </p>
           </div>
-          <p className="text-indigo-200 text-xs max-w-xs">
-            Exit is detected automatically via GPS geofencing — no check-out button to forget.
-          </p>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[

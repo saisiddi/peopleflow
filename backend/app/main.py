@@ -23,6 +23,8 @@ load_dotenv()
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 GRACE_MINUTES = int(os.environ.get("GEOFENCE_EXIT_GRACE_MINUTES", "15"))
+MIN_FULL_DAY_HOURS = 4  # exit sooner than this after entry = half_day
+ADMIN_SIGNUP_CODE = os.environ.get("ADMIN_SIGNUP_CODE", "dayflow-hr-admin")
 
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -64,7 +66,7 @@ def get_current_user(authorization: str = Header(...)) -> dict:
     return profile
 
 
-def require_admin(user: dict) -> dict:
+def require_admin(user: dict = Depends(get_current_user)) -> dict:
     if user["role"] != "admin":
         raise HTTPException(403, "Admin only")
     return user
@@ -79,7 +81,8 @@ def get_or_create_attendance(employee_id: str, day: date) -> dict:
         .maybe_single()
         .execute()
     )
-    if row.data:
+    # maybe_single() returns None (not a response) when no row exists
+    if row is not None and getattr(row, "data", None):
         return row.data
     created = (
         sb.table("attendance")
@@ -93,9 +96,30 @@ def get_office() -> dict:
     return (sb.table("office_location").select("*").eq("id", 1).single().execute()).data
 
 
+def parse_ts(value: str):
+    dt = datetime.fromisoformat(value)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def finalize_exit(row: dict) -> str:
+    """Close out an attendance row: exit_time = when the geofence was left,
+    status = half_day if fewer than MIN_FULL_DAY_HOURS were worked."""
+    exit_at = parse_ts(row["left_geofence_at"])
+    status = "present"
+    if row.get("entry_time"):
+        worked = (exit_at - parse_ts(row["entry_time"])).total_seconds() / 3600
+        if worked < MIN_FULL_DAY_HOURS:
+            status = "half_day"
+    sb.table("attendance").update(
+        {"exit_time": exit_at.isoformat(), "status": status}
+    ).eq("id", row["id"]).execute()
+    return status
+
+
 def finalize_stale_pending_exits() -> int:
     """Server-side safety net: close out pending_exit rows past the grace window."""
-    office = get_office()
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=GRACE_MINUTES)
     rows = (
         sb.table("attendance")
@@ -105,9 +129,7 @@ def finalize_stale_pending_exits() -> int:
         .execute()
     ).data
     for r in rows:
-        sb.table("attendance").update(
-            {"exit_time": r["left_geofence_at"], "status": "present"}
-        ).eq("id", r["id"]).execute()
+        finalize_exit(r)
     return len(rows)
 
 
@@ -118,7 +140,8 @@ class SignUpIn(BaseModel):
     password: str
     full_name: str
     employee_id: str
-    role: str = "employee"  # 'employee' | 'admin' (demo convenience)
+    role: str = "employee"  # 'employee' | 'admin'
+    admin_code: Optional[str] = None
 
 
 class ProfilePatch(BaseModel):
@@ -164,6 +187,8 @@ class PayrollPatch(BaseModel):
 def signup(body: SignUpIn):
     if body.role not in ("employee", "admin"):
         raise HTTPException(400, "role must be employee or admin")
+    if body.role == "admin" and body.admin_code != ADMIN_SIGNUP_CODE:
+        raise HTTPException(403, "Invalid admin signup code")
     try:
         resp = sb.auth.admin.create_user(
             {
@@ -242,11 +267,14 @@ def simulate_entry(body: EntrySimulateIn, user: dict = Depends(require_admin)):
     """Demo stand-in for the company's existing fingerprint scanner webhook."""
     row = get_or_create_attendance(body.employee_id, date.today())
     now = datetime.now(timezone.utc)
+    # a fresh punch resets any earlier exit (same-day re-entry support)
     sb.table("attendance").update(
         {
             "entry_time": now.isoformat(),
             "entry_source": "fingerprint_simulated",
             "status": "present",
+            "exit_time": None,
+            "left_geofence_at": None,
             "last_seen_inside_geofence_at": now.isoformat(),
         }
     ).eq("id", row["id"]).execute()
@@ -297,14 +325,10 @@ def geofence_ping(body: GeofencePingIn, user: dict = Depends(get_current_user)):
         }
 
     # already pending — check if grace window has elapsed
-    left_at = datetime.fromisoformat(row["left_geofence_at"])
-    if left_at.tzinfo is None:
-        left_at = left_at.replace(tzinfo=timezone.utc)
+    left_at = parse_ts(row["left_geofence_at"])
     if now - left_at >= timedelta(minutes=GRACE_MINUTES):
-        sb.table("attendance").update(
-            {"exit_time": left_at.isoformat(), "status": "present"}
-        ).eq("id", row["id"]).execute()
-        return {"state": "checked_out", "distance_m": round(dist), "exit_time": left_at.isoformat()}
+        status = finalize_exit(row)
+        return {"state": "checked_out", "distance_m": round(dist), "exit_time": left_at.isoformat(), "status": status}
     return {
         "state": "pending_exit",
         "distance_m": round(dist),
@@ -394,7 +418,7 @@ def my_leaves(user: dict = Depends(get_current_user)):
 def all_leaves(user: dict = Depends(require_admin)):
     return (
         sb.table("leave_requests")
-        .select("*, profiles(full_name, employee_id)")
+        .select("*, profiles!leave_requests_employee_id_fkey(full_name, employee_id)")
         .order("created_at", desc=True)
         .execute()
         .data
@@ -438,7 +462,7 @@ def my_payroll(user: dict = Depends(get_current_user)):
         .select("*")
         .eq("employee_id", user["id"])
         .eq("year", now.year)
-        .order("created_at", desc=True)
+        .order("month", desc=True)
         .execute()
         .data
     )
@@ -448,7 +472,7 @@ def my_payroll(user: dict = Depends(get_current_user)):
 def employee_payroll(employee_id: str, user: dict = Depends(require_admin)):
     return (
         sb.table("payroll")
-        .select("*, profiles(full_name, employee_id)")
+        .select("*, profiles!payroll_employee_id_fkey(full_name, employee_id)")
         .eq("employee_id", employee_id)
         .order("year", desc=True)
         .execute()
