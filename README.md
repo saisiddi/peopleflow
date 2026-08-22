@@ -19,7 +19,7 @@
 
 ---
 
-<img src="docs/screenshots/employee-dashboard.png" alt="Dayflow employee dashboard with live GPS attendance" width="100%">
+<img src="docs/screenshots/landing-full.png" alt="Dayflow landing page — hero with live presence demo and sign-in" width="100%">
 
 ---
 

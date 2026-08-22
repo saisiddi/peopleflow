@@ -4,6 +4,7 @@ import { api } from '../lib/api'
 import { useAuth } from '../lib/store'
 import { useGeofence, GeofenceIndicator } from '../lib/useGeofence'
 import { Card, Badge, StatusBadge } from '../components/ui'
+import { User, Clock, Palmtree, Wallet } from 'lucide-react'
 
 type LeaveRow = { id: string; leave_type: string; status: string; start_date: string; end_date: string; updated_at: string }
 type AttRow = { date: string; status: string; entry_time: string | null; exit_time: string | null }
@@ -89,14 +90,14 @@ export default function EmployeeDashboard() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          ['Profile', '/profile', '👤'],
-          ['Attendance', '/attendance', '🕐'],
-          ['Leave Requests', '/leave', '🌴'],
-          ['Payroll', '/payroll', '💰'],
-        ].map(([label, to, icon]) => (
+          ['Profile', '/profile', User, 'text-indigo-500'],
+          ['Attendance', '/attendance', Clock, 'text-emerald-500'],
+          ['Leave Requests', '/leave', Palmtree, 'text-amber-500'],
+          ['Payroll', '/payroll', Wallet, 'text-sky-500'],
+        ].map(([label, to, Icon, color]: any) => (
           <Link key={to} to={to}>
             <Card className="hover:shadow-md hover:-translate-y-0.5 transition cursor-pointer text-center">
-              <div className="text-3xl">{icon}</div>
+              <Icon size={26} className={`mx-auto ${color}`} strokeWidth={1.8} />
               <p className="mt-2 font-medium text-slate-700">{label}</p>
             </Card>
           </Link>

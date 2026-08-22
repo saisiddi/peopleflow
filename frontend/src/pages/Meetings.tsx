@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/store'
 import { Card, Button, Input, Badge } from '../components/ui'
+import { Calendar, Clock, MapPin, FileText } from 'lucide-react'
 
 type Meeting = {
   id: string; title: string; agenda?: string; meeting_date: string
@@ -126,8 +127,8 @@ export default function Meetings() {
                   {m.seen === false && <Badge color="indigo">NEW</Badge>}
                 </p>
                 <p className="text-sm text-slate-500 mt-0.5">
-                  📅 {fmtDate(m.meeting_date)} · 🕐 {m.meeting_time}
-                  {m.place ? ` · 📍 ${m.place}` : ''}
+                  <Calendar size={13} className="inline -mt-0.5" /> {fmtDate(m.meeting_date)} · <Clock size={13} className="inline -mt-0.5" /> {m.meeting_time}
+                  {m.place ? ` · MapPin` : ''}
                 </p>
               </div>
               {isAdmin && (
@@ -142,7 +143,7 @@ export default function Meetings() {
                 </button>
               )}
             </div>
-            {m.agenda && <p className="text-sm text-slate-600 mt-2">📝 {m.agenda}</p>}
+            {m.agenda && <p className="text-sm text-slate-600 mt-2 flex items-start gap-1.5"><FileText size={14} className="mt-0.5 shrink-0 text-slate-400" />{m.agenda}</p>}
             {m.meeting_attendees && m.meeting_attendees.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {m.meeting_attendees.map((a, i) => (

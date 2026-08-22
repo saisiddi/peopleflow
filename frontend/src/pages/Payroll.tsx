@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/store'
 import { Card, Input, Button, Badge } from '../components/ui'
+import { Printer } from 'lucide-react'
 
 type PayrollRow = {
   id: string; base_salary: number; allowances: number; deductions: number
@@ -120,7 +121,7 @@ export default function Payroll() {
                   }
                   className="px-4 py-2 rounded-xl bg-white text-indigo-700 text-sm font-semibold hover:bg-indigo-50 transition"
                 >
-                  🖨 Payslip
+                  <Printer size={14} className="inline -mt-0.5" /> Payslip
                 </button>
               </div>
             </>
@@ -181,7 +182,7 @@ export default function Payroll() {
                     }}
                     className="px-3 py-2 rounded-xl bg-white/15 text-white text-sm font-medium hover:bg-white/25 transition"
                   >
-                    🖨 Payslip
+                    <Printer size={14} className="inline -mt-0.5" /> Payslip
                   </button>
                   <button
                     onClick={save}

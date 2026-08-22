@@ -3,6 +3,7 @@ import { api } from '../lib/api'
 import { useAuth } from '../lib/store'
 import { useGeofence, GeofenceIndicator } from '../lib/useGeofence'
 import { Card, Badge, StatusBadge, Select } from '../components/ui'
+import { Lightbulb } from 'lucide-react'
 
 type AttRow = {
   id: string; date: string; status: string
@@ -63,7 +64,7 @@ export default function Attendance() {
       </div>
 
       <p className="text-xs text-slate-500 bg-slate-100 rounded-xl px-3 py-2">
-        💡 A day shows <span className="font-medium">On leave</span> only when an <span className="font-medium">approved</span> leave request covers it
+        <Lightbulb size={13} className="inline -mt-0.5" /> A day shows <span className="font-medium">On leave</span> only when an <span className="font-medium">approved</span> leave request covers it
         — the source request is listed under the status. <span className="font-medium">Rejected</span> leave never appears in attendance.
       </p>
 

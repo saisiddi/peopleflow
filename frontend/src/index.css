@@ -1,1 +1,62 @@
 @import "tailwindcss";
+
+:root {
+  --ink: #061524;
+  --deep: #0b2740;
+  --aqua: #4cc2ff;
+  --mist: #9fb8c8;
+  --foam: #f4f9fc;
+  --coral: #ff6b5e;
+}
+
+.font-display { font-family: "Sora", system-ui, sans-serif; }
+.font-body { font-family: "Inter", system-ui, sans-serif; }
+.font-data { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+/* ——— wave drift (hero) ——— */
+@keyframes drift-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes drift-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+.wave-a { animation: drift-left 26s linear infinite; }
+.wave-b { animation: drift-right 38s linear infinite; }
+
+/* ——— presence dot travelling into the geofence (hero demo) ——— */
+@keyframes approach {
+  0%   { left: 6%;  top: 68%; }
+  35%  { left: 38%; top: 72%; }
+  62%  { left: 55%; top: 46%; }
+  78%  { left: 64%; top: 38%; }
+  100% { left: 64%; top: 38%; }
+}
+.presence-dot { animation: approach 7s ease-in-out infinite; }
+
+@keyframes ripple {
+  0% { transform: scale(0.6); opacity: .9; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+.ripple { animation: ripple 2s ease-out infinite; }
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.float-y { animation: float-y 7s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wave-a, .wave-b, .presence-dot, .ripple, .float-y { animation: none; }
+}
+
+/* subtle scroll cue */
+@keyframes cue {
+  0%, 100% { transform: translateY(0); opacity: .6; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
+.scroll-cue { animation: cue 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue { animation: none; }
+}

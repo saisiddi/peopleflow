@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import { AuthProvider, useAuth } from './lib/store'
-import Auth from './pages/Auth'
+import Landing from './pages/Landing'
 import EmployeeDashboard from './pages/EmployeeDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import EmployeeDetail from './pages/EmployeeDetail'
@@ -40,7 +40,7 @@ function AppRoutes() {
           profile ? (
             <Navigate to={profile.role === 'admin' ? '/admin' : '/dashboard'} replace />
           ) : (
-            <Auth />
+            <Landing />
           )
         }
       />

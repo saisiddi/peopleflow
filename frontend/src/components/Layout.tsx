@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/store'
 import NotificationBell from './NotificationBell'
+import WaveLogo from './WaveLogo'
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { profile, signOut } = useAuth()
@@ -17,9 +18,9 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-2 min-h-16 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-          <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 grid place-items-center text-white font-bold">D</div>
-            <span className="font-semibold text-slate-800">Dayflow</span>
+          <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2.5">
+            <WaveLogo size={30} />
+            <span className="font-display font-bold text-slate-900 tracking-tight">Dayflow</span>
           </Link>
           <nav className="flex flex-wrap items-center gap-1">
             {isAdmin && <NavLink to="/admin" className={link} end>Overview</NavLink>}
