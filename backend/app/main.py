@@ -449,6 +449,35 @@ def review_leave(leave_id: str, body: LeaveReviewIn, user: dict = Depends(requir
             row = get_or_create_attendance(lr["employee_id"], d)
             sb.table("attendance").update({"status": "on_leave"}).eq("id", row["id"]).execute()
             d += timedelta(days=1)
+    else:
+        # rejection must undo on_leave marks — unless another approved leave still covers the date
+        d = date.fromisoformat(lr["start_date"])
+        end = date.fromisoformat(lr["end_date"])
+        while d <= end:
+            other_approved = (
+                sb.table("leave_requests")
+                .select("id")
+                .eq("employee_id", lr["employee_id"])
+                .eq("status", "approved")
+                .neq("id", leave_id)
+                .lte("start_date", d.isoformat())
+                .gte("end_date", d.isoformat())
+                .execute()
+                .data
+            )
+            if not other_approved:
+                row = (
+                    sb.table("attendance")
+                    .select("*")
+                    .eq("employee_id", lr["employee_id"])
+                    .eq("date", d.isoformat())
+                    .maybe_single()
+                    .execute()
+                )
+                att = row.data if row is not None and getattr(row, "data", None) else None
+                if att and att["status"] == "on_leave" and not att.get("entry_time"):
+                    sb.table("attendance").update({"status": "absent"}).eq("id", att["id"]).execute()
+            d += timedelta(days=1)
     return {"ok": True}
 
 
