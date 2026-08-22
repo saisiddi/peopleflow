@@ -42,7 +42,7 @@ export default function ProfilePage() {
         {p?.profile_picture_url ? (
           <img src={p.profile_picture_url} alt="avatar" className="w-20 h-20 rounded-2xl object-cover" />
         ) : (
-          <div className="w-20 h-20 rounded-2xl bg-indigo-100 text-[#0B6FA8] grid place-items-center text-2xl font-bold">{initials}</div>
+          <div className="w-20 h-20 rounded-2xl bg-[#EAF4FB] text-[#0B6FA8] grid place-items-center text-2xl font-bold">{initials}</div>
         )}
         <div>
           <h2 className="font-display font-semibold text-slate-900 text-lg">{p?.full_name}</h2>

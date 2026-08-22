@@ -74,7 +74,7 @@ export default function EmployeeDetail() {
         {profile?.profile_picture_url ? (
           <img src={profile.profile_picture_url} alt="avatar" className="w-16 h-16 rounded-2xl object-cover" />
         ) : (
-          <div className="w-16 h-16 rounded-2xl bg-indigo-100 text-[#0B6FA8] grid place-items-center text-xl font-bold">{initials}</div>
+          <div className="w-16 h-16 rounded-2xl bg-[#EAF4FB] text-[#0B6FA8] grid place-items-center text-xl font-bold">{initials}</div>
         )}
         <div>
           <h1 className="text-xl font-bold text-slate-800">{profile?.full_name}</h1>

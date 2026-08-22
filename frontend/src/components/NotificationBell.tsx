@@ -121,7 +121,7 @@ export default function NotificationBell() {
           {perm === 'default' && (
             <button
               onClick={enableBrowserNotifications}
-              className="w-full mt-2 px-2 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-medium hover:bg-indigo-100 transition"
+              className="w-full mt-2 px-2 py-2 rounded-xl bg-[#EAF4FB] text-[#0B6FA8] text-xs font-semibold hover:bg-[#E1EEF7] transition"
             >
               🔔 Enable browser notifications
             </button>
@@ -132,7 +132,7 @@ export default function NotificationBell() {
             </p>
           )}
           <Link to="/meetings" onClick={() => setOpen(false)}
-            className="block text-center text-sm text-indigo-600 hover:underline mt-2 pt-2 border-t border-slate-50">
+            className="block text-center text-sm text-[#0B6FA8] hover:underline mt-2 pt-2 border-t border-slate-50">
             View all meetings →
           </Link>
         </div>

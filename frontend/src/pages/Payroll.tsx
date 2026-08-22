@@ -105,7 +105,7 @@ export default function Payroll() {
                 <div className="bg-slate-50 rounded-xl p-3"><p className="text-slate-400 text-xs">Allowances</p><p className="font-semibold text-emerald-600">{fmt(rows[0].allowances)}</p></div>
                 <div className="bg-slate-50 rounded-xl p-3"><p className="text-slate-400 text-xs">Deductions</p><p className="font-semibold text-rose-600">{fmt(rows[0].deductions)}</p></div>
               </div>
-              <div className="bg-indigo-600 text-white rounded-xl p-4 flex items-center justify-between gap-3">
+              <div className="bg-[#0B2740] text-white rounded-2xl p-4 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[#BFD9E8] text-xs">Net salary — {monthLabel}</p>
                   <span className="text-2xl font-bold">{fmt(rows[0].net_salary)}</span>
@@ -141,7 +141,7 @@ export default function Payroll() {
           <select
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm mb-4 bg-white"
+            className="w-full px-3.5 py-2.5 rounded-2xl border border-[#0B2740]/12 text-sm mb-4 bg-white"
           >
             <option value="">— select employee —</option>
             {employees.map((e: any) => (
@@ -158,7 +158,7 @@ export default function Payroll() {
                 <div><label className="text-xs text-slate-400">Deductions</label>
                   <Input type="number" value={edit.deductions} onChange={(e) => setEdit({ ...edit, deductions: e.target.value })} /></div>
               </div>
-              <div className="mt-4 bg-indigo-600 text-white rounded-xl p-4 flex items-center justify-between">
+              <div className="mt-4 bg-[#0B2740] text-white rounded-2xl p-4 flex items-center justify-between">
                 <div>
                   <p className="text-[#BFD9E8] text-xs">Net salary — {monthLabel}</p>
                   <p className="text-2xl font-bold">

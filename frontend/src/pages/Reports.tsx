@@ -69,7 +69,7 @@ export default function Reports() {
         <select
           value={month}
           onChange={(e) => setMonth(e.target.value)}
-          className="px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white"
+          className="px-3.5 py-2.5 rounded-2xl border border-[#0B2740]/12 text-sm bg-white"
         >
           {months.map((m) => (
             <option key={m} value={m}>

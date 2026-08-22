@@ -99,8 +99,8 @@ export default function Meetings() {
                     onClick={() => toggle(e.id)}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
                       selected.has(e.id)
-                        ? 'bg-indigo-600 text-white border-[#0B2740]'
-                        : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                        ? 'bg-[#0B2740] text-white border-[#0B2740]'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-[#4CC2FF]'
                     }`}
                   >
                     {e.full_name} ({e.employee_id}){e.role === 'admin' ? ' · HR' : ''}

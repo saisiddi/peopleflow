@@ -51,6 +51,9 @@
   .wave-a, .wave-b, .presence-dot, .ripple, .float-y { animation: none; }
 }
 
+/* anchor sections clear the sticky header when jumping from nav */
+section[id] { scroll-margin-top: 5rem; }
+
 /* subtle scroll cue */
 @keyframes cue {
   0%, 100% { transform: translateY(0); opacity: .6; }
