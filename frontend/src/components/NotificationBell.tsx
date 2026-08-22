@@ -9,15 +9,47 @@ type Meeting = {
 }
 
 /** Header bell: lights up live (Supabase Realtime) when the signed-in
- *  employee is added to a meeting. Opening it marks notifications read. */
+ *  employee is added to a meeting. Opening it marks notifications read.
+ *  With permission granted, new invites also raise a native browser
+ *  notification so the user hears about them with the tab in the background. */
 export default function NotificationBell() {
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [open, setOpen] = useState(false)
+  const [perm, setPerm] = useState<string>(
+    typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
+  )
   const boxRef = useRef<HTMLDivElement>(null)
+  const knownIds = useRef<Set<string>>(new Set())
+  const initialized = useRef(false)
+
+  const desktopNotify = (m: Meeting) => {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+    const when = `${new Date(m.meeting_date).toLocaleDateString(undefined, {
+      weekday: 'short', day: 'numeric', month: 'short',
+    })} · ${m.meeting_time}${m.place ? ` · ${m.place}` : ''}`
+    const n = new Notification('📅 New meeting invite', { body: `${m.title}\n${when}`, tag: m.id })
+    n.onclick = () => { window.focus(); n.close() }
+  }
 
   const load = () =>
-    api<Meeting[]>('/meetings/me').then(setMeetings).catch(() => {})
+    api<Meeting[]>('/meetings/me')
+      .then((ms) => {
+        // only raise desktop notifications for invites that arrive AFTER first load
+        if (initialized.current) {
+          ms.filter((m) => !knownIds.current.has(m.id) && m.seen === false).forEach(desktopNotify)
+        }
+        ms.forEach((m) => knownIds.current.add(m.id))
+        initialized.current = true
+        setMeetings(ms)
+      })
+      .catch(() => {})
   useEffect(() => { load() }, [])
+
+  const enableBrowserNotifications = async () => {
+    if (typeof Notification === 'undefined') return
+    const result = await Notification.requestPermission()
+    setPerm(result)
+  }
 
   // realtime: any change to my attendee rows (e.g. being added) refreshes the bell
   useEffect(() => {
@@ -85,6 +117,19 @@ export default function NotificationBell() {
                 </li>
               ))}
             </ul>
+          )}
+          {perm === 'default' && (
+            <button
+              onClick={enableBrowserNotifications}
+              className="w-full mt-2 px-2 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-medium hover:bg-indigo-100 transition"
+            >
+              🔔 Enable browser notifications
+            </button>
+          )}
+          {perm === 'denied' && (
+            <p className="text-xs text-slate-400 px-1 mt-2">
+              Browser notifications are blocked — allow them in your browser's site settings.
+            </p>
           )}
           <Link to="/meetings" onClick={() => setOpen(false)}
             className="block text-center text-sm text-indigo-600 hover:underline mt-2 pt-2 border-t border-slate-50">
