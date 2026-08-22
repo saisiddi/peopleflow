@@ -40,7 +40,7 @@ export default function Payroll() {
   const save = async () => {
     setMsg('')
     try {
-      await api(`/payroll/${selected}`, {
+      const r = await api<{ net_salary: number }>(`/payroll/${selected}`, {
         method: 'PATCH',
         body: JSON.stringify({
           base_salary: parseFloat(edit.base_salary) || 0,
@@ -48,9 +48,11 @@ export default function Payroll() {
           deductions: parseFloat(edit.deductions) || 0,
         }),
       })
-      setMsg('Payroll updated. Net auto-computed.')
+      setMsg(`Saved · net ${fmt(r.net_salary)}`)
     } catch (e: any) { setMsg(e.message) }
   }
+
+  const monthLabel = new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -79,48 +81,52 @@ export default function Payroll() {
       )}
 
       {isAdmin && (
-        <>
-          <Card>
-            <h2 className="font-semibold text-slate-800 mb-3">Edit employee payroll</h2>
-            <select
-              value={selected}
-              onChange={(e) => setSelected(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm mb-4 bg-white"
-            >
-              <option value="">— select employee —</option>
-              {employees.map((e: any) => (
-                <option key={e.id} value={e.id}>{e.full_name} ({e.employee_id})</option>
-              ))}
-            </select>
-            {selected && (
-              <div className="grid sm:grid-cols-3 gap-3 items-end">
-                <div><label className="text-xs text-slate-400">Base salary</label>
+        <Card>
+          <h2 className="font-semibold text-slate-800 mb-1">Employee payroll editor</h2>
+          <p className="text-xs text-slate-400 mb-4">
+            Select an employee to view and edit their salary structure. The employee sees this as read-only;
+            net salary auto-computes as base + allowances − deductions.
+          </p>
+          <select
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm mb-4 bg-white"
+          >
+            <option value="">— select employee —</option>
+            {employees.map((e: any) => (
+              <option key={e.id} value={e.id}>{e.full_name} ({e.employee_id})</option>
+            ))}
+          </select>
+          {selected && (
+            <>
+              <div className="grid sm:grid-cols-3 gap-3">
+                <div><label className="text-xs text-slate-400">Base salary (monthly)</label>
                   <Input type="number" value={edit.base_salary} onChange={(e) => setEdit({ ...edit, base_salary: e.target.value })} /></div>
                 <div><label className="text-xs text-slate-400">Allowances</label>
                   <Input type="number" value={edit.allowances} onChange={(e) => setEdit({ ...edit, allowances: e.target.value })} /></div>
                 <div><label className="text-xs text-slate-400">Deductions</label>
                   <Input type="number" value={edit.deductions} onChange={(e) => setEdit({ ...edit, deductions: e.target.value })} /></div>
-                <div className="sm:col-span-3 flex items-center gap-3 flex-wrap">
-                  <Button onClick={save}>Save</Button>
-                  <Badge color="indigo">Net = base + allowances − deductions</Badge>
-                  <span className="text-sm text-slate-500">
-                    Net: <strong className="text-indigo-600">
-                      {fmt((parseFloat(edit.base_salary) || 0) + (parseFloat(edit.allowances) || 0) - (parseFloat(edit.deductions) || 0))}
-                    </strong>
-                  </span>
-                  {msg && <span className="text-sm text-emerald-600">{msg}</span>}
+              </div>
+              <div className="mt-4 bg-indigo-600 text-white rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-indigo-100 text-xs">Net salary — {monthLabel}</p>
+                  <p className="text-2xl font-bold">
+                    {fmt((parseFloat(edit.base_salary) || 0) + (parseFloat(edit.allowances) || 0) - (parseFloat(edit.deductions) || 0))}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {msg && <span className="text-sm text-emerald-200">✓ {msg}</span>}
+                  <button
+                    onClick={save}
+                    className="px-4 py-2 rounded-xl bg-white text-indigo-700 text-sm font-semibold hover:bg-indigo-50 transition"
+                  >
+                    Save
+                  </button>
                 </div>
               </div>
-            )}
-          </Card>
-
-          <Card>
-            <h2 className="font-semibold text-slate-800 mb-3">My payroll snapshot (admin)</h2>
-            {rows[0] ? (
-              <p className="text-sm text-slate-600">{rows[0].month} {rows[0].year} · Net <strong>{fmt(rows[0].net_salary)}</strong></p>
-            ) : <p className="text-sm text-slate-400">No data.</p>}
-          </Card>
-        </>
+            </>
+          )}
+        </Card>
       )}
     </div>
   )

@@ -483,22 +483,36 @@ def employee_payroll(employee_id: str, user: dict = Depends(require_admin)):
 @app.patch("/payroll/{employee_id}")
 def patch_payroll(employee_id: str, body: PayrollPatch, user: dict = Depends(require_admin)):
     rows = sb.table("payroll").select("*").eq("employee_id", employee_id).execute().data
+    base = body.base_salary if body.base_salary is not None else float(rows[0]["base_salary"] or 0) if rows else 0
+    allow = body.allowances if body.allowances is not None else float(rows[0]["allowances"] or 0) if rows else 0
+    ded = body.deductions if body.deductions is not None else float(rows[0]["deductions"] or 0) if rows else 0
+    net = base + allow - ded
+    now = datetime.now()
     if not rows:
-        raise HTTPException(404, "No payroll row — seed one first")
-    row = rows[0]
-    base = body.base_salary if body.base_salary is not None else float(row["base_salary"] or 0)
-    allow = body.allowances if body.allowances is not None else float(row["allowances"] or 0)
-    ded = body.deductions if body.deductions is not None else float(row["deductions"] or 0)
-    sb.table("payroll").update(
-        {
-            "base_salary": base,
-            "allowances": allow,
-            "deductions": ded,
-            "net_salary": base + allow - ded,
-            "updated_by": user["id"],
-        }
-    ).eq("id", row["id"]).execute()
-    return {"ok": True, "net_salary": base + allow - ded}
+        # users signed up before payroll seeding (e.g. early Google users) — create now
+        sb.table("payroll").insert(
+            {
+                "employee_id": employee_id,
+                "base_salary": base,
+                "allowances": allow,
+                "deductions": ded,
+                "net_salary": net,
+                "month": now.strftime("%B"),
+                "year": now.year,
+                "updated_by": user["id"],
+            }
+        ).execute()
+    else:
+        sb.table("payroll").update(
+            {
+                "base_salary": base,
+                "allowances": allow,
+                "deductions": ded,
+                "net_salary": net,
+                "updated_by": user["id"],
+            }
+        ).eq("id", rows[0]["id"]).execute()
+    return {"ok": True, "net_salary": net}
 
 
 # ---------- background finalize loop (cron substitute for the demo) ----------
