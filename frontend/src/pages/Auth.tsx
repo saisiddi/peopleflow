@@ -13,26 +13,33 @@ export default function Auth() {
   const [adminCode, setAdminCode] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [verifyUrl, setVerifyUrl] = useState('')
 
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setBusy(true); setError('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setError(error.message)
+    if (error)
+      setError(
+        error.message.toLowerCase().includes('email not confirmed')
+          ? 'Please verify your email first — check your inbox for the verification link.'
+          : error.message
+      )
     setBusy(false)
   }
 
   const signUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    setBusy(true); setError('')
+    setBusy(true); setError(''); setVerifyUrl('')
     try {
       const res = await fetch(`${API_URL}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, full_name: fullName, employee_id: employeeId, role, admin_code: adminCode }),
       })
-      if (!res.ok) throw new Error((await res.json()).detail || 'Signup failed')
-      await supabase.auth.signInWithPassword({ email, password })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || 'Signup failed')
+      setVerifyUrl(data.verify_url || '')
     } catch (err: any) {
       setError(err.message)
     }
@@ -87,6 +94,15 @@ export default function Auth() {
           <Input type="password" placeholder="Password (min 6 chars)" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
 
           {error && <p className="text-sm text-rose-600 bg-rose-50 rounded-xl px-3 py-2">{error}</p>}
+          {verifyUrl && (
+            <div className="text-sm text-indigo-700 bg-indigo-50 rounded-xl px-3 py-2 space-y-1">
+              <p>✓ Account created — <strong>verify your email</strong>, then sign in.</p>
+              <a href={verifyUrl} className="underline font-medium">Open verification link →</a>
+            </div>
+          )}
+          {mode === 'signup' && !verifyUrl && !error && (
+            <p className="text-xs text-slate-400">After signup you'll receive a verification email before you can sign in.</p>
+          )}
           <Button type="submit" disabled={busy} className="w-full">
             {busy ? 'Please wait…' : mode === 'signin' ? 'Sign In' : 'Create Account'}
           </Button>

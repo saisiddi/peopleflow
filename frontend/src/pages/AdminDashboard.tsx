@@ -70,6 +70,31 @@ export default function AdminDashboard() {
 
       {msg && <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2">{msg}</p>}
 
+      <div className="flex flex-wrap gap-2">
+        {(() => {
+          const m = new Date().toISOString().slice(0, 8)
+          const mr = attendance.filter((a) => a.date.startsWith(m))
+          const c = (s: string) => mr.filter((a) => a.status === s).length
+          const chips: [string, string, string][] = [
+            ['present', 'present', 'text-emerald-600'],
+            ['on_leave', 'on leave', 'text-sky-600'],
+            ['half_day', 'half-days', 'text-amber-600'],
+          ]
+          return (
+            <>
+              {chips.map(([s, label, color]) => (
+                <span key={s} className="px-3 py-1.5 rounded-full bg-white border border-slate-100 text-xs font-medium text-slate-600">
+                  This month: <strong className={color}>{c(s)} {label}</strong>
+                </span>
+              ))}
+              <Link to="/reports" className="px-3 py-1.5 rounded-full bg-indigo-50 text-xs font-medium text-indigo-600 hover:bg-indigo-100">
+                Full report →
+              </Link>
+            </>
+          )
+        })()}
+      </div>
+
       <div className="flex justify-end">
         <Button variant="ghost" onClick={async () => {
           const r = await api<{ finalized: number }>('/attendance/finalize-pending', { method: 'POST' })

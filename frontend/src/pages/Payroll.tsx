@@ -12,6 +12,41 @@ type PayrollRow = {
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
 
+function printPayslip(opts: {
+  name: string; empId: string; jobTitle?: string; department?: string
+  month: string; base: number; allowances: number; deductions: number; net: number
+}) {
+  const w = window.open('', '_blank', 'width=720,height=800')
+  if (!w) return
+  const row = (label: string, value: string) =>
+    `<tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0">${label}</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right"><b>${value}</b></td></tr>`
+  w.document.write(`
+    <html><head><title>Payslip — ${opts.name}</title>
+    <style>
+      body { font-family: Arial, sans-serif; color: #1e293b; padding: 32px; }
+      h1 { color: #4f46e5; margin: 0; font-size: 22px; }
+      .muted { color: #64748b; font-size: 13px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+      .net td { background: #eef2ff; font-size: 16px; }
+    </style></head><body>
+      <h1>Dayflow HRMS</h1>
+      <p class="muted">Payslip for ${opts.month}</p>
+      <hr>
+      <p><b>${opts.name}</b> (${opts.empId})<br>
+      <span class="muted">${opts.jobTitle || '—'}${opts.department ? ' · ' + opts.department : ''}</span></p>
+      <table>
+        ${row('Base salary', fmt(opts.base))}
+        ${row('Allowances', fmt(opts.allowances))}
+        ${row('Deductions', '-' + fmt(opts.deductions))}
+        <tr class="net"><td style="padding:10px 12px">Net salary</td><td style="padding:10px 12px;text-align:right">${fmt(opts.net)}</td></tr>
+      </table>
+      <p class="muted" style="margin-top:24px">This is a system-generated payslip.</p>
+    </body></html>`)
+  w.document.close()
+  w.focus()
+  w.print()
+}
+
 export default function Payroll() {
   const { profile } = useAuth()
   const isAdmin = profile?.role === 'admin'
@@ -69,9 +104,24 @@ export default function Payroll() {
                 <div className="bg-slate-50 rounded-xl p-3"><p className="text-slate-400 text-xs">Allowances</p><p className="font-semibold text-emerald-600">{fmt(rows[0].allowances)}</p></div>
                 <div className="bg-slate-50 rounded-xl p-3"><p className="text-slate-400 text-xs">Deductions</p><p className="font-semibold text-rose-600">{fmt(rows[0].deductions)}</p></div>
               </div>
-              <div className="bg-indigo-600 text-white rounded-xl p-4 flex items-center justify-between">
-                <span className="font-medium">Net salary</span>
-                <span className="text-2xl font-bold">{fmt(rows[0].net_salary)}</span>
+              <div className="bg-indigo-600 text-white rounded-xl p-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-indigo-100 text-xs">Net salary — {monthLabel}</p>
+                  <span className="text-2xl font-bold">{fmt(rows[0].net_salary)}</span>
+                </div>
+                <button
+                  onClick={() =>
+                    printPayslip({
+                      name: profile?.full_name || '', empId: profile?.employee_id || '',
+                      jobTitle: profile?.job_title, department: profile?.department,
+                      month: monthLabel, base: Number(rows[0].base_salary), allowances: Number(rows[0].allowances),
+                      deductions: Number(rows[0].deductions), net: Number(rows[0].net_salary),
+                    })
+                  }
+                  className="px-4 py-2 rounded-xl bg-white text-indigo-700 text-sm font-semibold hover:bg-indigo-50 transition"
+                >
+                  🖨 Payslip
+                </button>
               </div>
             </>
           ) : (
@@ -116,6 +166,23 @@ export default function Payroll() {
                 </div>
                 <div className="flex items-center gap-3">
                   {msg && <span className="text-sm text-emerald-200">✓ {msg}</span>}
+                  <button
+                    onClick={() => {
+                      const emp = employees.find((x: any) => x.id === selected)
+                      printPayslip({
+                        name: emp?.full_name || '', empId: emp?.employee_id || '',
+                        jobTitle: emp?.job_title, department: emp?.department,
+                        month: monthLabel,
+                        base: parseFloat(edit.base_salary) || 0,
+                        allowances: parseFloat(edit.allowances) || 0,
+                        deductions: parseFloat(edit.deductions) || 0,
+                        net: (parseFloat(edit.base_salary) || 0) + (parseFloat(edit.allowances) || 0) - (parseFloat(edit.deductions) || 0),
+                      })
+                    }}
+                    className="px-3 py-2 rounded-xl bg-white/15 text-white text-sm font-medium hover:bg-white/25 transition"
+                  >
+                    🖨 Payslip
+                  </button>
                   <button
                     onClick={save}
                     className="px-4 py-2 rounded-xl bg-white text-indigo-700 text-sm font-semibold hover:bg-indigo-50 transition"

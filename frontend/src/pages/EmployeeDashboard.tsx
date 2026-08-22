@@ -33,11 +33,30 @@ export default function EmployeeDashboard() {
       })),
   ].slice(0, 5)
 
+  const monthStart = new Date().toISOString().slice(0, 8)
+  const monthRows = attendance.filter((a) => a.date.startsWith(monthStart))
+  const mc = (s: string) => monthRows.filter((a) => a.status === s).length
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Good day, {profile?.full_name?.split(' ')[0] || 'there'} 👋</h1>
         <p className="text-slate-500 text-sm">{profile?.job_title || 'Employee'}{profile?.department ? ` · ${profile.department}` : ''}</p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <span className="px-3 py-1.5 rounded-full bg-white border border-slate-100 text-xs font-medium text-slate-600">
+          This month: <strong className="text-emerald-600">{mc('present')} present</strong>
+        </span>
+        <span className="px-3 py-1.5 rounded-full bg-white border border-slate-100 text-xs font-medium text-slate-600">
+          <strong className="text-sky-600">{mc('on_leave')} on leave</strong>
+        </span>
+        <span className="px-3 py-1.5 rounded-full bg-white border border-slate-100 text-xs font-medium text-slate-600">
+          <strong className="text-amber-600">{mc('half_day')} half-days</strong>
+        </span>
+        <Link to="/reports" className="px-3 py-1.5 rounded-full bg-indigo-50 text-xs font-medium text-indigo-600 hover:bg-indigo-100">
+          Full report →
+        </Link>
       </div>
 
       {profile?.role === 'employee' && (

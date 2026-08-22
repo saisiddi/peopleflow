@@ -5,9 +5,11 @@ and sends the user's access token as a Bearer token. We validate it by
 calling supabase.auth.get_user(token) and load the matching profile row.
 All DB access uses the service-role key (backend is the trust boundary).
 """
+import json
 import os
 import threading
 import time
+import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from math import atan2, cos, radians, sin, sqrt
 from typing import List, Optional
@@ -25,6 +27,10 @@ SUPABASE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 GRACE_MINUTES = int(os.environ.get("GEOFENCE_EXIT_GRACE_MINUTES", "15"))
 MIN_FULL_DAY_HOURS = 4  # exit sooner than this after entry = half_day
 ADMIN_SIGNUP_CODE = os.environ.get("ADMIN_SIGNUP_CODE", "dayflow-hr-admin")
+
+# Email (Resend). Without a key, emails are logged to the backend console (dry-run).
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+EMAIL_FROM = os.environ.get("EMAIL_FROM", "Dayflow HRMS <onboarding@resend.dev>")
 
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -46,6 +52,23 @@ def haversine_distance(lat1, lng1, lat2, lng2):
     d_lambda = radians(lng2 - lng1)
     a = sin(d_phi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(d_lambda / 2) ** 2
     return R * 2 * atan2(sqrt(a), sqrt(1 - a))
+
+
+def send_email(to: str, subject: str, html: str):
+    """Send via Resend when configured; otherwise log to console (dry-run)."""
+    if not RESEND_API_KEY:
+        print(f"[EMAIL dry-run] to={to} | subject={subject}")
+        return
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=json.dumps({"from": EMAIL_FROM, "to": [to], "subject": subject, "html": html}).encode(),
+        headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+    )
+    try:
+        urllib.request.urlopen(req)
+        print(f"[EMAIL sent] to={to} | subject={subject}")
+    except Exception as e:
+        print(f"[EMAIL failed] to={to}: {e}")
 
 
 def get_current_user(authorization: str = Header(...)) -> dict:
@@ -209,7 +232,7 @@ def signup(body: SignUpIn):
             {
                 "email": body.email,
                 "password": body.password,
-                "email_confirm": True,  # demo: skip email verification wait
+                "email_confirm": False,  # user must verify via the emailed link
                 "user_metadata": {"full_name": body.full_name},
             }
         )
@@ -236,7 +259,31 @@ def signup(body: SignUpIn):
             "year": now.year,
         }
     ).execute()
-    return {"id": uid, "message": "Signed up. You can now sign in."}
+
+    # send verification email with a Supabase confirmation link
+    verify_url = None
+    try:
+        link = sb.auth.admin.generate_link({"type": "signup", "email": body.email})
+        verify_url = link.properties.action_link
+    except Exception as e:
+        print(f"[VERIFY LINK failed] {body.email}: {e}")
+    if verify_url:
+        send_email(
+            body.email,
+            "Verify your email — Dayflow HRMS",
+            f"""
+            <h2>Welcome to Dayflow 👋</h2>
+            <p>Hi {body.full_name}, please verify your email to activate your account:</p>
+            <p><a href="{verify_url}" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">Verify my email</a></p>
+            <p>— Dayflow HRMS</p>
+            """,
+        )
+    return {
+        "id": uid,
+        "message": "Account created. Check your email to verify, then sign in.",
+        # in dry-run (no email provider configured) expose the link so demos aren't blocked
+        "verify_url": verify_url if not RESEND_API_KEY else None,
+    }
 
 
 # ---------- profiles ----------
@@ -463,6 +510,24 @@ def review_leave(leave_id: str, body: LeaveReviewIn, user: dict = Depends(requir
         }
     ).eq("id", leave_id).execute()
 
+    # approval/rejection email to the employee
+    employee = (
+        sb.table("profiles").select("email, full_name").eq("id", lr["employee_id"]).single().execute().data
+    )
+    if employee.get("email"):
+        verb = "approved" if body.status == "approved" else "rejected"
+        send_email(
+            employee["email"],
+            f"Your leave request has been {verb}",
+            f"""
+            <h2>Leave request {verb}</h2>
+            <p>Hi {employee.get('full_name') or 'there'},</p>
+            <p>Your <b>{lr['leave_type']}</b> leave for <b>{lr['start_date']} → {lr['end_date']}</b> has been <b>{verb}</b>.</p>
+            {f"<p>Admin note: “{body.admin_comment}”</p>" if body.admin_comment else ""}
+            <p>— Dayflow HRMS</p>
+            """,
+        )
+
     # approved leave marks attendance rows as on_leave for the range
     if body.status == "approved":
         d = date.fromisoformat(lr["start_date"])
@@ -606,6 +671,29 @@ def create_meeting(body: MeetingIn, user: dict = Depends(require_admin)):
         sb.table("meeting_attendees").insert(
             [{"meeting_id": meeting["id"], "employee_id": eid} for eid in body.attendee_ids]
         ).execute()
+        # email every attendee
+        attendees = (
+            sb.table("profiles").select("email, full_name").in_("id", body.attendee_ids).execute().data
+        )
+        for a in attendees:
+            if not a.get("email"):
+                continue
+            send_email(
+                a["email"],
+                f"Meeting invite: {body.title}",
+                f"""
+                <h2>You've been invited to a meeting</h2>
+                <p>Hi {a.get('full_name') or 'there'},</p>
+                <p><b>{body.title}</b></p>
+                <ul>
+                  <li>📅 Date: {body.meeting_date}</li>
+                  <li>🕐 Time: {body.meeting_time}</li>
+                  <li>📍 Place: {body.place or 'TBA'}</li>
+                  <li>📝 Agenda: {body.agenda or '—'}</li>
+                </ul>
+                <p>— Dayflow HRMS</p>
+                """,
+            )
     return meeting
 
 
