@@ -62,6 +62,11 @@ export default function Attendance() {
         </Select>
       </div>
 
+      <p className="text-xs text-slate-500 bg-slate-100 rounded-xl px-3 py-2">
+        💡 A day shows <span className="font-medium">On leave</span> only when an <span className="font-medium">approved</span> leave request covers it
+        — the source request is listed under the status. <span className="font-medium">Rejected</span> leave never appears in attendance.
+      </p>
+
       {!isAdmin && (
         <Card>
           <h2 className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">Today — live status</h2>
@@ -93,8 +98,8 @@ export default function Attendance() {
                     <td className="py-2">
                       <StatusBadge status={a.status} />
                       {a.status === 'on_leave' && leaveFor(a) && (
-                        <span className="block text-xs text-slate-400 mt-0.5">
-                          from approved {leaveFor(a)!.leave_type} leave ({leaveFor(a)!.start_date} → {leaveFor(a)!.end_date})
+                        <span className="block text-xs font-medium text-slate-500 mt-0.5">
+                          ✅ approved {leaveFor(a)!.leave_type} leave ({leaveFor(a)!.start_date} → {leaveFor(a)!.end_date})
                         </span>
                       )}
                     </td>
