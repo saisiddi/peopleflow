@@ -178,7 +178,21 @@ export default function AdminDashboard() {
                   <td className="py-2">{a.entry_time ? <Badge color="indigo">Fingerprint</Badge> : '—'}</td>
                   <td className="py-2 text-slate-500">{a.exit_time ? new Date(a.exit_time).toLocaleTimeString() : '—'}</td>
                   <td className="py-2">{a.exit_time ? <Badge color="blue">GPS Auto-Detected</Badge> : '—'}</td>
-                  <td className="py-2"><StatusBadge status={a.status} /></td>
+                  <td className="py-2">
+                    <StatusBadge status={a.status} />
+                    {a.status === 'on_leave' &&
+                      leaves.find(
+                        (l) =>
+                          l.status === 'approved' &&
+                          l.employee_id === a.employee_id &&
+                          l.start_date <= a.date &&
+                          a.date <= l.end_date
+                      ) && (
+                        <span className="block text-xs text-slate-400 mt-0.5">
+                          from approved {leaves.find((l) => l.status === 'approved' && l.employee_id === a.employee_id && l.start_date <= a.date && a.date <= l.end_date)!.leave_type} leave
+                        </span>
+                      )}
+                  </td>
                 </tr>
               ))}
               {attendance.length === 0 && (

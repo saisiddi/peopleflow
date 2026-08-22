@@ -8,20 +8,36 @@ type AttRow = {
   id: string; date: string; status: string
   entry_time: string | null; entry_source: string
   exit_time: string | null; exit_source: string
+  employee_id?: string
   profiles?: { full_name: string }
 }
+type LeaveRow = { id: string; employee_id: string; leave_type: string; status: string; start_date: string; end_date: string }
 
 export default function Attendance() {
   const { profile } = useAuth()
   const isAdmin = profile?.role === 'admin'
   const gf = useGeofence(!isAdmin)
   const [rows, setRows] = useState<AttRow[]>([])
+  const [leaves, setLeaves] = useState<LeaveRow[]>([])
 
   useEffect(() => {
     api<AttRow[]>(isAdmin ? '/attendance/all' : '/attendance/me')
       .then(setRows)
       .catch(() => {})
+    api<LeaveRow[]>(isAdmin ? '/leave/all' : '/leave/me')
+      .then(setLeaves)
+      .catch(() => {})
   }, [isAdmin])
+
+  // link an on_leave day back to the approved leave request that covers it
+  const leaveFor = (row: AttRow): LeaveRow | undefined =>
+    leaves.find(
+      (l) =>
+        l.status === 'approved' &&
+        (!row.employee_id || l.employee_id === row.employee_id) &&
+        l.start_date <= row.date &&
+        row.date <= l.end_date
+    )
 
   // group by week for the weekly view
   const weekOf = (d: string) => {
@@ -74,7 +90,14 @@ export default function Attendance() {
                     <td className="py-2">{a.entry_time ? <Badge color="indigo">Fingerprint</Badge> : '—'}</td>
                     <td className="py-2 text-slate-500">{a.exit_time ? new Date(a.exit_time).toLocaleTimeString() : '—'}</td>
                     <td className="py-2">{a.exit_time ? <Badge color="blue">GPS Auto-Detected</Badge> : '—'}</td>
-                    <td className="py-2"><StatusBadge status={a.status} /></td>
+                    <td className="py-2">
+                      <StatusBadge status={a.status} />
+                      {a.status === 'on_leave' && leaveFor(a) && (
+                        <span className="block text-xs text-slate-400 mt-0.5">
+                          from approved {leaveFor(a)!.leave_type} leave ({leaveFor(a)!.start_date} → {leaveFor(a)!.end_date})
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {rows.length === 0 && <tr><td colSpan={7} className="py-4 text-slate-400">No records yet.</td></tr>}
@@ -89,10 +112,13 @@ export default function Attendance() {
               <h3 className="font-semibold text-slate-700 mb-2">Week of {week}</h3>
               <ul className="space-y-2">
                 {days.map((d) => (
-                  <li key={d.id} className="flex items-center justify-between text-sm">
+                  <li key={d.id} className="flex items-center justify-between gap-2 text-sm">
                     <span className="text-slate-600">
                       {new Date(d.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
                       {isAdmin && d.profiles ? ` · ${d.profiles.full_name}` : ''}
+                      {d.status === 'on_leave' && leaveFor(d) && (
+                        <span className="block text-xs text-slate-400">from approved {leaveFor(d)!.leave_type} leave</span>
+                      )}
                     </span>
                     <StatusBadge status={d.status} />
                   </li>
