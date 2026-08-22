@@ -10,7 +10,7 @@ import threading
 import time
 from datetime import date, datetime, timedelta, timezone
 from math import atan2, cos, radians, sin, sqrt
-from typing import Optional
+from typing import List, Optional
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Header
@@ -185,6 +185,15 @@ class OfficeLocationIn(BaseModel):
     lat: float
     lng: float
     radius_meters: int = 150
+
+
+class MeetingIn(BaseModel):
+    title: str
+    agenda: Optional[str] = None
+    meeting_date: date
+    meeting_time: str  # "HH:MM"
+    place: Optional[str] = None
+    attendee_ids: List[str] = []
 
 
 # ---------- auth ----------
@@ -564,6 +573,83 @@ def update_office_location(body: OfficeLocationIn, user: dict = Depends(require_
     sb.table("office_location").update(
         {"lat": body.lat, "lng": body.lng, "radius_meters": body.radius_meters}
     ).eq("id", 1).execute()
+    return {"ok": True}
+
+
+# ---------- meetings ----------
+
+@app.post("/meetings")
+def create_meeting(body: MeetingIn, user: dict = Depends(require_admin)):
+    meeting = (
+        sb.table("meetings")
+        .insert(
+            {
+                "title": body.title,
+                "agenda": body.agenda,
+                "meeting_date": body.meeting_date.isoformat(),
+                "meeting_time": body.meeting_time,
+                "place": body.place,
+                "created_by": user["id"],
+            }
+        )
+        .execute()
+        .data[0]
+    )
+    if body.attendee_ids:
+        sb.table("meeting_attendees").insert(
+            [{"meeting_id": meeting["id"], "employee_id": eid} for eid in body.attendee_ids]
+        ).execute()
+    return meeting
+
+
+@app.get("/meetings/all")
+def all_meetings(user: dict = Depends(require_admin)):
+    rows = (
+        sb.table("meetings")
+        .select("*, meeting_attendees(profiles(full_name, employee_id))")
+        .order("meeting_date", desc=False)
+        .execute()
+        .data
+    )
+    return rows
+
+
+@app.get("/meetings/me")
+def my_meetings(user: dict = Depends(get_current_user)):
+    rows = (
+        sb.table("meeting_attendees")
+        .select("seen, meetings(*)")
+        .eq("employee_id", user["id"])
+        .execute()
+        .data
+    )
+    out = []
+    for r in rows:
+        m = r.get("meetings")
+        if not m:
+            continue
+        m["seen"] = r.get("seen", False)
+        out.append(m)
+    out.sort(key=lambda m: (m["meeting_date"], m.get("meeting_time", "")), reverse=True)
+    return out
+
+
+@app.patch("/meetings/{meeting_id}/seen")
+def mark_meeting_seen(meeting_id: str, user: dict = Depends(get_current_user)):
+    (
+        sb.table("meeting_attendees")
+        .update({"seen": True})
+        .eq("meeting_id", meeting_id)
+        .eq("employee_id", user["id"])
+        .execute()
+    )
+    return {"ok": True}
+
+
+@app.delete("/meetings/{meeting_id}")
+def delete_meeting(meeting_id: str, user: dict = Depends(require_admin)):
+    sb.table("meeting_attendees").delete().eq("meeting_id", meeting_id).execute()
+    sb.table("meetings").delete().eq("id", meeting_id).execute()
     return {"ok": True}
 
 

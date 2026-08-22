@@ -8,6 +8,7 @@ import EmployeeDashboard from './pages/EmployeeDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import EmployeeDetail from './pages/EmployeeDetail'
 import Geofence from './pages/Geofence'
+import Meetings from './pages/Meetings'
 import Attendance from './pages/Attendance'
 import Leave from './pages/Leave'
 import ProfilePage from './pages/ProfilePage'
@@ -46,6 +47,7 @@ function AppRoutes() {
       <Route path="/admin" element={<Protected adminOnly><Layout><AdminDashboard /></Layout></Protected>} />
       <Route path="/admin/employee/:id" element={<Protected adminOnly><Layout><EmployeeDetail /></Layout></Protected>} />
       <Route path="/geofence" element={<Protected adminOnly><Layout><Geofence /></Layout></Protected>} />
+      <Route path="/meetings" element={<Protected><Layout><Meetings /></Layout></Protected>} />
       <Route path="/attendance" element={<Protected><Layout><Attendance /></Layout></Protected>} />
       <Route path="/leave" element={<Protected><Layout><Leave /></Layout></Protected>} />
       <Route path="/profile" element={<Protected><Layout><ProfilePage /></Layout></Protected>} />
