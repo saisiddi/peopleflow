@@ -62,7 +62,11 @@ def send_email(to: str, subject: str, html: str):
     req = urllib.request.Request(
         "https://api.resend.com/emails",
         data=json.dumps({"from": EMAIL_FROM, "to": [to], "subject": subject, "html": html}).encode(),
-        headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {RESEND_API_KEY}",
+            "Content-Type": "application/json",
+            "User-Agent": "dayflow-hrms/1.0",  # default python-urllib UA is blocked by Cloudflare
+        },
     )
     try:
         urllib.request.urlopen(req)
