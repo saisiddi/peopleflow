@@ -65,7 +65,7 @@ export default function Reports() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">Reports</h1>
+        <h1 className="font-display text-2xl font-bold text-slate-900 tracking-tight">Reports</h1>
         <select
           value={month}
           onChange={(e) => setMonth(e.target.value)}
@@ -85,7 +85,7 @@ export default function Reports() {
           ['On leave', count('on_leave'), 'text-sky-600'],
           ['Half days', count('half_day'), 'text-amber-600'],
           ['Absent', count('absent'), 'text-rose-600'],
-          ['Attendance rate', rate + '%', 'text-indigo-600'],
+          ['Attendance rate', rate + '%', 'text-[#0B6FA8]'],
         ].map(([label, value, color]) => (
           <Card key={label as string} className="text-center !py-4">
             <p className={`text-2xl font-bold ${color}`}>{value}</p>
@@ -96,10 +96,10 @@ export default function Reports() {
 
       <Card>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-slate-800">
+          <h2 className="font-display font-semibold text-slate-900">
             {isAdmin ? 'Attendance by employee' : 'My monthly record'} — {new Date(`${month}-01T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
           </h2>
-          <button onClick={exportCsv} className="text-sm text-indigo-600 hover:underline font-medium">
+          <button onClick={exportCsv} className="text-sm text-[#0B6FA8] hover:underline font-medium">
             ⬇ Export CSV
           </button>
         </div>

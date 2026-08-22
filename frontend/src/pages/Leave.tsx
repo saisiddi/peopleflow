@@ -74,16 +74,16 @@ export default function Leave() {
     ['Pending', String(stat('pending')), 'text-amber-600'],
     ['Approved', String(stat('approved')), 'text-emerald-600'],
     ['Rejected', String(stat('rejected')), 'text-rose-600'],
-    ['Approved days off', String(approvedDays), 'text-indigo-600'],
+    ['Approved days off', String(approvedDays), 'text-[#0B6FA8]'],
   ]
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Leave & Time-Off</h1>
+      <h1 className="font-display text-2xl font-bold text-slate-900 tracking-tight">Leave & Time-Off</h1>
 
       {!isAdmin && (
         <Card>
-          <h2 className="font-semibold text-slate-800 mb-3">Apply for leave</h2>
+          <h2 className="font-display font-semibold text-slate-900 mb-3">Apply for leave</h2>
           <form onSubmit={apply} className="grid sm:grid-cols-4 gap-3 items-end">
             <div>
               <label className="text-xs text-slate-400">Type</label>
@@ -106,7 +106,7 @@ export default function Leave() {
               <Input placeholder="Remarks (optional)" value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} />
             </div>
           </form>
-          {msg && <p className="text-sm text-indigo-600 mt-2">{msg}</p>}
+          {msg && <p className="text-sm text-[#0B6FA8] mt-2">{msg}</p>}
         </Card>
       )}
 
@@ -121,7 +121,7 @@ export default function Leave() {
 
       {isAdmin && (
         <Card>
-          <h2 className="font-semibold text-slate-800 mb-3">Leave record by employee</h2>
+          <h2 className="font-display font-semibold text-slate-900 mb-3">Leave record by employee</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -138,7 +138,7 @@ export default function Leave() {
                     <td className="py-2 text-amber-600">{s.pending || '—'}</td>
                     <td className="py-2 text-emerald-600">{s.approved || '—'}</td>
                     <td className="py-2 text-rose-600">{s.rejected || '—'}</td>
-                    <td className="py-2 font-medium text-indigo-600">{s.days || '—'}</td>
+                    <td className="py-2 font-medium text-[#0B6FA8]">{s.days || '—'}</td>
                   </tr>
                 ))}
                 {Object.keys(byEmployee).length === 0 && (
@@ -152,7 +152,7 @@ export default function Leave() {
 
       <Card>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-slate-800">
+          <h2 className="font-display font-semibold text-slate-900">
             {isAdmin ? 'All requests' : 'My requests'}{' '}
             <span className="text-xs font-normal text-slate-400">updates live — no refresh needed</span>
           </h2>
@@ -172,7 +172,7 @@ export default function Leave() {
                 </p>
                 <p className="text-sm text-slate-500">{l.start_date} → {l.end_date}</p>
                 {l.remarks && <p className="text-xs text-slate-400 mt-1">“{l.remarks}”</p>}
-                {l.admin_comment && <p className="text-xs text-indigo-500 mt-1">Admin: “{l.admin_comment}”</p>}
+                {l.admin_comment && <p className="text-xs text-[#0B6FA8] mt-1">Admin: “{l.admin_comment}”</p>}
               </div>
               <div className="flex items-center gap-2">
                 <StatusBadge status={l.status} />

@@ -65,11 +65,11 @@ export default function Meetings() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Meetings</h1>
+      <h1 className="font-display text-2xl font-bold text-slate-900 tracking-tight">Meetings</h1>
 
       {isAdmin && (
         <Card>
-          <h2 className="font-semibold text-slate-800 mb-3">Schedule a meeting</h2>
+          <h2 className="font-display font-semibold text-slate-900 mb-3">Schedule a meeting</h2>
           <form onSubmit={create} className="space-y-3">
             <div className="grid sm:grid-cols-2 gap-3">
               <div><label className="text-xs text-slate-400">Title</label>
@@ -99,7 +99,7 @@ export default function Meetings() {
                     onClick={() => toggle(e.id)}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
                       selected.has(e.id)
-                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        ? 'bg-indigo-600 text-white border-[#0B2740]'
                         : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
                     }`}
                   >
@@ -119,10 +119,10 @@ export default function Meetings() {
 
       <div className="grid md:grid-cols-2 gap-4">
         {meetings.map((m) => (
-          <Card key={m.id} className={justSeen.has(m.id) ? '!border-indigo-300 !bg-indigo-50/40' : ''}>
+          <Card key={m.id} className={justSeen.has(m.id) ? '!border-[#4CC2FF]/50 !bg-[#EAF4FB]/40' : ''}>
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="font-semibold text-slate-800">
+                <p className="font-display font-semibold text-slate-900">
                   {m.title}
                   {m.seen === false && <Badge color="indigo">NEW</Badge>}
                 </p>

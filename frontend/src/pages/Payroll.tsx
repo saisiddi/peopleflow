@@ -92,11 +92,11 @@ export default function Payroll() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <h1 className="text-2xl font-bold text-slate-800">Payroll</h1>
+      <h1 className="font-display text-2xl font-bold text-slate-900 tracking-tight">Payroll</h1>
 
       {!isAdmin && (
         <Card>
-          <h2 className="font-semibold text-slate-800 mb-1">Salary — {rows[0]?.month} {rows[0]?.year}</h2>
+          <h2 className="font-display font-semibold text-slate-900 mb-1">Salary — {rows[0]?.month} {rows[0]?.year}</h2>
           <p className="text-xs text-slate-400 mb-4">Read-only. Contact HR for corrections.</p>
           {rows[0] ? (
             <>
@@ -107,7 +107,7 @@ export default function Payroll() {
               </div>
               <div className="bg-indigo-600 text-white rounded-xl p-4 flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-indigo-100 text-xs">Net salary — {monthLabel}</p>
+                  <p className="text-[#BFD9E8] text-xs">Net salary — {monthLabel}</p>
                   <span className="text-2xl font-bold">{fmt(rows[0].net_salary)}</span>
                 </div>
                 <button
@@ -119,7 +119,7 @@ export default function Payroll() {
                       deductions: Number(rows[0].deductions), net: Number(rows[0].net_salary),
                     })
                   }
-                  className="px-4 py-2 rounded-xl bg-white text-indigo-700 text-sm font-semibold hover:bg-indigo-50 transition"
+                  className="px-4 py-2 rounded-xl bg-white text-[#0B6FA8] text-sm font-semibold hover:bg-[#EAF4FB] transition"
                 >
                   <Printer size={14} className="inline -mt-0.5" /> Payslip
                 </button>
@@ -133,7 +133,7 @@ export default function Payroll() {
 
       {isAdmin && (
         <Card>
-          <h2 className="font-semibold text-slate-800 mb-1">Employee payroll editor</h2>
+          <h2 className="font-display font-semibold text-slate-900 mb-1">Employee payroll editor</h2>
           <p className="text-xs text-slate-400 mb-4">
             Select an employee to view and edit their salary structure. The employee sees this as read-only;
             net salary auto-computes as base + allowances − deductions.
@@ -160,7 +160,7 @@ export default function Payroll() {
               </div>
               <div className="mt-4 bg-indigo-600 text-white rounded-xl p-4 flex items-center justify-between">
                 <div>
-                  <p className="text-indigo-100 text-xs">Net salary — {monthLabel}</p>
+                  <p className="text-[#BFD9E8] text-xs">Net salary — {monthLabel}</p>
                   <p className="text-2xl font-bold">
                     {fmt((parseFloat(edit.base_salary) || 0) + (parseFloat(edit.allowances) || 0) - (parseFloat(edit.deductions) || 0))}
                   </p>
@@ -186,7 +186,7 @@ export default function Payroll() {
                   </button>
                   <button
                     onClick={save}
-                    className="px-4 py-2 rounded-xl bg-white text-indigo-700 text-sm font-semibold hover:bg-indigo-50 transition"
+                    className="px-4 py-2 rounded-xl bg-white text-[#0B6FA8] text-sm font-semibold hover:bg-[#EAF4FB] transition"
                   >
                     Save
                   </button>

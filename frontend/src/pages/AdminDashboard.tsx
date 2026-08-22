@@ -62,7 +62,7 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Admin Overview</h1>
+          <h1 className="font-display text-2xl font-bold text-slate-900 tracking-tight">Admin Overview</h1>
           <p className="text-slate-500 text-sm">{profile?.full_name} · HR Control Center</p>
         </div>
         <Badge color="indigo">{pending.length} pending approval{pending.length === 1 ? '' : 's'}</Badge>
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
                   This month: <strong className={color}>{c(s)} {label}</strong>
                 </span>
               ))}
-              <Link to="/reports" className="px-3 py-1.5 rounded-full bg-indigo-50 text-xs font-medium text-indigo-600 hover:bg-indigo-100">
+              <Link to="/reports" className="px-3 py-1.5 rounded-full bg-[#EAF4FB] text-xs font-medium text-[#0B6FA8] hover:bg-[#E1EEF7]">
                 Full report →
               </Link>
             </>
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-slate-800">Employees ({filtered.length})</h2>
+            <h2 className="font-display font-semibold text-slate-900">Employees ({filtered.length})</h2>
             <Input placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} className="!w-40" />
           </div>
           <ul className="divide-y divide-slate-50 max-h-72 overflow-auto">
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
                       </Button>
                     )}
                     <Link to={`/admin/employee/${e.id}`}
-                      className="px-4 py-2 rounded-xl text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition">
+                      className="px-4 py-2 rounded-xl text-sm font-medium bg-[#0B2740] text-white hover:bg-[#061524] transition">
                       View
                     </Link>
                   </div>
@@ -153,8 +153,8 @@ export default function AdminDashboard() {
 
         <Card>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-slate-800">Leave Approvals Queue</h2>
-            <Link to="/leave" className="text-sm text-indigo-600 hover:underline">Manage all →</Link>
+            <h2 className="font-display font-semibold text-slate-900">Leave Approvals Queue</h2>
+            <Link to="/leave" className="text-sm text-[#0B6FA8] hover:underline">Manage all →</Link>
           </div>
           {pending.length === 0 ? (
             <p className="text-sm text-slate-400">No pending requests. 🎉</p>
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
       </div>
 
       <Card>
-        <h2 className="font-semibold text-slate-800 mb-3">Attendance Records</h2>
+        <h2 className="font-display font-semibold text-slate-900 mb-3">Attendance Records</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

@@ -41,7 +41,7 @@ export default function EmployeeDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Good day, {profile?.full_name?.split(' ')[0] || 'there'} 👋</h1>
+        <h1 className="font-display text-2xl font-bold text-slate-900 tracking-tight">Good day, {profile?.full_name?.split(' ')[0] || 'there'} 👋</h1>
         <p className="text-slate-500 text-sm">{profile?.job_title || 'Employee'}{profile?.department ? ` · ${profile.department}` : ''}</p>
       </div>
 
@@ -55,26 +55,26 @@ export default function EmployeeDashboard() {
         <span className="px-3 py-1.5 rounded-full bg-white border border-slate-100 text-xs font-medium text-slate-600">
           <strong className="text-amber-600">{mc('half_day')} half-days</strong>
         </span>
-        <Link to="/reports" className="px-3 py-1.5 rounded-full bg-indigo-50 text-xs font-medium text-indigo-600 hover:bg-indigo-100">
+        <Link to="/reports" className="px-3 py-1.5 rounded-full bg-[#EAF4FB] text-xs font-medium text-[#0B6FA8] hover:bg-[#E1EEF7]">
           Full report →
         </Link>
       </div>
 
       {profile?.role === 'employee' && (
-        <Card className="!bg-gradient-to-r !from-indigo-600 !to-indigo-500 !border-0">
+        <Card className="!bg-gradient-to-r !from-[#0B2740] !to-[#061524] !border-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <p className="text-indigo-100 text-xs uppercase tracking-wider font-semibold">Live attendance</p>
+              <p className="text-[#BFD9E8] text-xs uppercase tracking-wider font-semibold">Live attendance</p>
               <div className="mt-2 [&_span]:!text-white">
                 <GeofenceIndicator gf={gf} />
               </div>
-              {gf.error && <p className="text-xs text-indigo-200 mt-1">{gf.error}</p>}
+              {gf.error && <p className="text-xs text-[#9FB8C8] mt-1">{gf.error}</p>}
               {gf.checked_in && (
                 <p className="text-xs text-emerald-200 mt-1">✓ Checked in — you entered the office geofence</p>
               )}
             </div>
             <div className="flex flex-col items-end gap-2">
-              <p className="text-indigo-200 text-xs max-w-xs">
+              <p className="text-[#9FB8C8] text-xs max-w-xs">
                 Fully GPS: entering the office radius checks you in automatically — leaving it (after a grace window) checks you out.
               </p>
               <button
@@ -90,7 +90,7 @@ export default function EmployeeDashboard() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          ['Profile', '/profile', User, 'text-indigo-500'],
+          ['Profile', '/profile', User, 'text-[#0B6FA8]'],
           ['Attendance', '/attendance', Clock, 'text-emerald-500'],
           ['Leave Requests', '/leave', Palmtree, 'text-amber-500'],
           ['Payroll', '/payroll', Wallet, 'text-sky-500'],
@@ -105,7 +105,7 @@ export default function EmployeeDashboard() {
       </div>
 
       <Card>
-        <h2 className="font-semibold text-slate-800 mb-3">Recent activity</h2>
+        <h2 className="font-display font-semibold text-slate-900 mb-3">Recent activity</h2>
         {recent.length === 0 ? (
           <p className="text-sm text-slate-400">Nothing yet — apply for leave or check in to see activity here.</p>
         ) : (
@@ -121,7 +121,7 @@ export default function EmployeeDashboard() {
       </Card>
 
       <Card>
-        <h2 className="font-semibold text-slate-800 mb-3">
+        <h2 className="font-display font-semibold text-slate-900 mb-3">
           My leave status <span className="text-xs font-normal text-slate-400">(live)</span>
         </h2>
         {leaves.length > 0 && (

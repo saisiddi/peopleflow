@@ -10,13 +10,13 @@ export default function Layout({ children }: { children: ReactNode }) {
   const isAdmin = profile?.role === 'admin'
 
   const link = ({ isActive }: any) =>
-    `px-3 py-2 rounded-xl text-sm font-medium transition ${
-      isActive ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+    `px-3 py-2 rounded-xl text-sm font-semibold transition ${
+      isActive ? 'bg-[#0B2740] text-white' : 'text-[#0B2740]/70 hover:bg-[#EDF4F9]'
     }`
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-[#F4F9FC] font-body">
+      <header className="bg-white/90 backdrop-blur border-b border-[#0B2740]/10 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-2 min-h-16 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
           <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2.5">
             <WaveLogo size={30} />
@@ -34,7 +34,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             <NotificationBell />
             <button
               onClick={async () => { await signOut(); nav('/') }}
-              className="ml-2 px-3 py-2 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-100"
+              className="ml-2 px-3 py-2 rounded-xl text-sm font-semibold text-[#0B2740]/60 hover:bg-[#EDF4F9]"
             >
               Logout
             </button>

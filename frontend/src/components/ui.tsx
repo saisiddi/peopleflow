@@ -1,8 +1,10 @@
 import { ReactNode } from 'react'
 
+/* Tidal design system — deep ink #0B2740 / abyss #061524 / aqua #4CC2FF / foam #F4F9FC */
+
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-5 ${className}`}>
+    <div className={`bg-white rounded-3xl shadow-[0_1px_2px_rgba(6,21,36,0.05)] border border-[#0B2740]/10 p-5 ${className}`}>
       {children}
     </div>
   )
@@ -24,9 +26,9 @@ export function Button({
   className?: string
 }) {
   const styles = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-700',
-    ghost: 'bg-slate-100 text-slate-700 hover:bg-slate-200',
-    danger: 'bg-rose-600 text-white hover:bg-rose-700',
+    primary: 'bg-[#0B2740] text-white hover:bg-[#061524]',
+    ghost: 'bg-[#EDF4F9] text-[#0B2740] hover:bg-[#E1EEF7]',
+    danger: 'bg-[#FF6B5E] text-white hover:bg-[#FF574A]',
     success: 'bg-emerald-600 text-white hover:bg-emerald-700',
   }
   return (
@@ -34,7 +36,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 ${styles[variant]} ${className}`}
+      className={`px-4 py-2 rounded-2xl text-sm font-semibold transition disabled:opacity-50 ${styles[variant]} ${className}`}
     >
       {children}
     </button>
@@ -45,7 +47,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 text-sm ${props.className || ''}`}
+      className={`w-full px-3.5 py-2.5 rounded-2xl border border-[#0B2740]/12 bg-white focus:border-[#4CC2FF] focus:outline-none focus:ring-4 focus:ring-[#4CC2FF]/15 text-sm placeholder:text-slate-400 transition ${props.className || ''}`}
     />
   )
 }
@@ -54,22 +56,22 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className={`w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 text-sm bg-white ${props.className || ''}`}
+      className={`w-full px-3.5 py-2.5 rounded-2xl border border-[#0B2740]/12 focus:border-[#4CC2FF] focus:outline-none focus:ring-4 focus:ring-[#4CC2FF]/15 text-sm bg-white transition ${props.className || ''}`}
     />
   )
 }
 
 export function Badge({ children, color = 'slate' }: { children: ReactNode; color?: string }) {
   const colors: Record<string, string> = {
-    slate: 'bg-slate-100 text-slate-600',
-    green: 'bg-emerald-100 text-emerald-700',
-    amber: 'bg-amber-100 text-amber-700',
-    red: 'bg-rose-100 text-rose-700',
-    blue: 'bg-sky-100 text-sky-700',
-    indigo: 'bg-indigo-100 text-indigo-700',
+    slate: 'bg-[#EDF4F9] text-[#0B2740]/70',
+    green: 'bg-emerald-50 text-emerald-700',
+    amber: 'bg-amber-50 text-amber-700',
+    red: 'bg-[#FF6B5E]/10 text-[#E14A3D]',
+    blue: 'bg-sky-50 text-sky-700',
+    indigo: 'bg-[#EAF4FB] text-[#0B6FA8]',
   }
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[color]}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${colors[color]}`}>
       {children}
     </span>
   )

@@ -67,14 +67,14 @@ export default function EmployeeDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link to="/admin" className="text-sm text-indigo-600 hover:underline">← Back to overview</Link>
+        <Link to="/admin" className="text-sm text-[#0B6FA8] hover:underline">← Back to overview</Link>
       </div>
 
       <Card className="flex items-center gap-4">
         {profile?.profile_picture_url ? (
           <img src={profile.profile_picture_url} alt="avatar" className="w-16 h-16 rounded-2xl object-cover" />
         ) : (
-          <div className="w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-600 grid place-items-center text-xl font-bold">{initials}</div>
+          <div className="w-16 h-16 rounded-2xl bg-indigo-100 text-[#0B6FA8] grid place-items-center text-xl font-bold">{initials}</div>
         )}
         <div>
           <h1 className="text-xl font-bold text-slate-800">{profile?.full_name}</h1>
@@ -88,7 +88,7 @@ export default function EmployeeDetail() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Card>
-          <h2 className="font-semibold text-slate-800 mb-3">Attendance (last 30 days)</h2>
+          <h2 className="font-display font-semibold text-slate-900 mb-3">Attendance (last 30 days)</h2>
           <ul className="divide-y divide-slate-50 max-h-80 overflow-auto">
             {attendance.map((a) => (
               <li key={a.id} className="py-2 flex items-center justify-between text-sm">
@@ -107,7 +107,7 @@ export default function EmployeeDetail() {
 
         <div className="space-y-6">
           <Card>
-            <h2 className="font-semibold text-slate-800 mb-3">
+            <h2 className="font-display font-semibold text-slate-900 mb-3">
               Payroll {payroll ? `— ${payroll.month} ${payroll.year}` : ''}
             </h2>
             {payroll ? (
@@ -122,7 +122,7 @@ export default function EmployeeDetail() {
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-sm text-slate-500">Net salary</span>
-                  <span className="text-lg font-bold text-indigo-600">{fmt(netPreview)}</span>
+                  <span className="text-lg font-bold text-[#0B6FA8]">{fmt(netPreview)}</span>
                 </div>
                 <div className="mt-3 flex items-center gap-3">
                   <Button onClick={savePayroll}>Save payroll</Button>
@@ -135,7 +135,7 @@ export default function EmployeeDetail() {
           </Card>
 
           <Card>
-            <h2 className="font-semibold text-slate-800 mb-3">Contact</h2>
+            <h2 className="font-display font-semibold text-slate-900 mb-3">Contact</h2>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between"><dt className="text-slate-400">Phone</dt><dd className="text-slate-700">{profile?.phone || '—'}</dd></div>
               <div className="flex justify-between"><dt className="text-slate-400">Address</dt><dd className="text-slate-700 text-right max-w-[60%]">{profile?.address || '—'}</dd></div>

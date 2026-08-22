@@ -41,9 +41,9 @@ export default function Geofence() {
     marker.current = L.marker([pos.lat, pos.lng], { draggable: true }).addTo(m)
     circle.current = L.circle([pos.lat, pos.lng], {
       radius,
-      color: '#4f46e5',
+      color: '#0B6FA8',
       weight: 2,
-      fillColor: '#6366f1',
+      fillColor: '#4CC2FF',
       fillOpacity: 0.12,
     }).addTo(m)
     m.on('click', (e: L.LeafletMouseEvent) => setPos({ lat: e.latlng.lat, lng: e.latlng.lng }))
@@ -101,7 +101,7 @@ export default function Geofence() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Office Geofence</h1>
+        <h1 className="font-display text-2xl font-bold text-slate-900 tracking-tight">Office Geofence</h1>
         <p className="text-slate-500 text-sm">
           Search your company, drag or click to fine-tune the pin, adjust the radius, then save.
           Employees' exit detection uses this circle.
@@ -123,7 +123,7 @@ export default function Geofence() {
             {hits.map((h, i) => (
               <li key={i}>
                 <button
-                  className="w-full text-left px-3 py-2 text-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition"
+                  className="w-full text-left px-3 py-2 text-sm text-slate-600 hover:bg-[#EAF4FB] hover:text-[#0B6FA8] transition"
                   onClick={() => {
                     setPos({ lat: parseFloat(h.lat), lng: parseFloat(h.lon) })
                     setHits([])
@@ -143,12 +143,12 @@ export default function Geofence() {
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-sm font-medium text-slate-700">Radius</label>
-              <span className="text-sm font-semibold text-indigo-600">{radius} m</span>
+              <span className="text-sm font-semibold text-[#0B6FA8]">{radius} m</span>
             </div>
             <input
               type="range" min={50} max={1000} step={10} value={radius}
               onChange={(e) => setRadius(parseInt(e.target.value, 10))}
-              className="w-full accent-indigo-600"
+              className="w-full accent-[#0B2740]"
             />
             <div className="flex justify-between text-xs text-slate-400"><span>50 m</span><span>1000 m</span></div>
           </div>

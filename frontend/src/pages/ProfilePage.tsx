@@ -36,16 +36,16 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <h1 className="text-2xl font-bold text-slate-800">My Profile</h1>
+      <h1 className="font-display text-2xl font-bold text-slate-900 tracking-tight">My Profile</h1>
 
       <Card className="flex items-center gap-4">
         {p?.profile_picture_url ? (
           <img src={p.profile_picture_url} alt="avatar" className="w-20 h-20 rounded-2xl object-cover" />
         ) : (
-          <div className="w-20 h-20 rounded-2xl bg-indigo-100 text-indigo-600 grid place-items-center text-2xl font-bold">{initials}</div>
+          <div className="w-20 h-20 rounded-2xl bg-indigo-100 text-[#0B6FA8] grid place-items-center text-2xl font-bold">{initials}</div>
         )}
         <div>
-          <h2 className="font-semibold text-slate-800 text-lg">{p?.full_name}</h2>
+          <h2 className="font-display font-semibold text-slate-900 text-lg">{p?.full_name}</h2>
           <p className="text-sm text-slate-500">{p?.email}</p>
           <p className="text-xs text-slate-400 mt-1">
             {p?.employee_id} · {p?.role === 'admin' ? 'Admin / HR' : 'Employee'}
@@ -55,7 +55,7 @@ export default function ProfilePage() {
       </Card>
 
       <Card>
-        <h2 className="font-semibold text-slate-800 mb-3">Details</h2>
+        <h2 className="font-display font-semibold text-slate-900 mb-3">Details</h2>
         <dl className="grid sm:grid-cols-2 gap-3 text-sm">
           <div><dt className="text-slate-400">Job title</dt><dd className="text-slate-700">{p?.job_title || '—'}</dd></div>
           <div><dt className="text-slate-400">Department</dt><dd className="text-slate-700">{p?.department || '—'}</dd></div>
@@ -66,7 +66,7 @@ export default function ProfilePage() {
       </Card>
 
       <Card>
-        <h2 className="font-semibold text-slate-800 mb-1">Edit profile</h2>
+        <h2 className="font-display font-semibold text-slate-900 mb-1">Edit profile</h2>
         <p className="text-xs text-slate-400 mb-3">
           Employees can edit phone, address and profile picture{isAdmin ? ' (admins can edit all fields)' : ''}.
         </p>

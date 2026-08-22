@@ -56,7 +56,7 @@ export default function Attendance() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">Attendance</h1>
+        <h1 className="font-display text-2xl font-bold text-slate-900 tracking-tight">Attendance</h1>
         <Select value={view} onChange={(e) => setView(e.target.value as any)} className="!w-36">
           <option value="daily">Daily view</option>
           <option value="weekly">Weekly view</option>

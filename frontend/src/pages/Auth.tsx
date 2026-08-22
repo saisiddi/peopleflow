@@ -95,7 +95,7 @@ export default function Auth() {
 
           {error && <p className="text-sm text-rose-600 bg-rose-50 rounded-xl px-3 py-2">{error}</p>}
           {verifyUrl && (
-            <div className="text-sm text-indigo-700 bg-indigo-50 rounded-xl px-3 py-2 space-y-1">
+            <div className="text-sm text-[#0B6FA8] bg-[#EAF4FB] rounded-xl px-3 py-2 space-y-1">
               <p>✓ Account created — <strong>verify your email</strong>, then sign in.</p>
               <a href={verifyUrl} className="underline font-medium">Open verification link →</a>
             </div>
