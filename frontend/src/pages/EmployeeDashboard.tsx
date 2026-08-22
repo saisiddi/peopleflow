@@ -10,7 +10,7 @@ type AttRow = { date: string; status: string; entry_time: string | null; exit_ti
 
 export default function EmployeeDashboard() {
   const { profile } = useAuth()
-  const gf = useGeofence(profile?.role === 'employee')
+  const { gf, pingNow } = useGeofence(profile?.role === 'employee')
   const [leaves, setLeaves] = useState<LeaveRow[]>([])
   const [attendance, setAttendance] = useState<AttRow[]>([])
 
@@ -49,10 +49,21 @@ export default function EmployeeDashboard() {
                 <GeofenceIndicator gf={gf} />
               </div>
               {gf.error && <p className="text-xs text-indigo-200 mt-1">{gf.error}</p>}
+              {gf.checked_in && (
+                <p className="text-xs text-emerald-200 mt-1">✓ Checked in — you entered the office geofence</p>
+              )}
             </div>
-            <p className="text-indigo-200 text-xs max-w-xs">
-              Exit is detected automatically via GPS geofencing — no check-out button to forget.
-            </p>
+            <div className="flex flex-col items-end gap-2">
+              <p className="text-indigo-200 text-xs max-w-xs">
+                Fully GPS: entering the office radius checks you in automatically — leaving it (after a grace window) checks you out.
+              </p>
+              <button
+                onClick={pingNow}
+                className="px-3 py-1.5 rounded-xl bg-white/15 text-white text-xs font-medium hover:bg-white/25 transition"
+              >
+                Check my location now
+              </button>
+            </div>
           </div>
         </Card>
       )}

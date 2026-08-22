@@ -107,12 +107,12 @@ export default function AdminDashboard() {
                             : `Checked in ${fmtTime(att.entry_time)}`}
                         </span>
                         <Button variant="ghost" onClick={() => simulatePunch(e.id, e.full_name)}>
-                          Re-punch
+                          Check in again
                         </Button>
                       </>
                     ) : (
                       <Button variant="ghost" onClick={() => simulatePunch(e.id, e.full_name)}>
-                        Simulate Fingerprint Punch
+                        Manual check-in (demo)
                       </Button>
                     )}
                     <Link to={`/admin/employee/${e.id}`}
@@ -174,8 +174,8 @@ export default function AdminDashboard() {
                 <tr key={a.id}>
                   <td className="py-2 font-medium text-slate-700">{a.profiles?.full_name}</td>
                   <td className="py-2 text-slate-500">{a.date}</td>
-                  <td className="py-2 text-slate-500">{a.entry_time ? new Date(a.entry_time).toLocaleTimeString() : '—'}</td>
-                  <td className="py-2">{a.entry_time ? <Badge color="indigo">Fingerprint</Badge> : '—'}</td>
+                    <td className="py-2 text-slate-500">{a.entry_time ? new Date(a.entry_time).toLocaleTimeString() : '—'}</td>
+                    <td className="py-2">{a.entry_time ? <Badge color={a.entry_source === 'gps_geofence' ? 'blue' : 'slate'}>{a.entry_source === 'gps_geofence' ? 'GPS' : 'Manual (demo)'}</Badge> : '—'}</td>
                   <td className="py-2 text-slate-500">{a.exit_time ? new Date(a.exit_time).toLocaleTimeString() : '—'}</td>
                   <td className="py-2">{a.exit_time ? <Badge color="blue">GPS Auto-Detected</Badge> : '—'}</td>
                   <td className="py-2">

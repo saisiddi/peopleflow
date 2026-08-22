@@ -307,8 +307,8 @@ def geofence_ping(body: GeofencePingIn, user: dict = Depends(get_current_user)):
 
     update = {"last_seen_lat": body.lat, "last_seen_lng": body.lng}
 
-    if not row.get("entry_time"):
-        # no entry yet — nothing to track
+    if not row.get("entry_time") and not inside:
+        # no entry yet and not in the office — nothing to track
         sb.table("attendance").update(update).eq("id", row["id"]).execute()
         return {"state": "not_checked_in", "distance_m": round(dist)}
 
@@ -320,6 +320,13 @@ def geofence_ping(body: GeofencePingIn, user: dict = Depends(get_current_user)):
             update["left_geofence_at"] = None
             sb.table("attendance").update(update).eq("id", row["id"]).execute()
             return {"state": "present", "distance_m": round(dist), "returned": True}
+        if not row.get("entry_time"):
+            # GPS entry: first presence inside the office geofence = check-in
+            update["entry_time"] = now.isoformat()
+            update["entry_source"] = "gps_geofence"
+            update["status"] = "present"
+            sb.table("attendance").update(update).eq("id", row["id"]).execute()
+            return {"state": "present", "distance_m": round(dist), "checked_in": True}
         sb.table("attendance").update(update).eq("id", row["id"]).execute()
         return {"state": "present", "distance_m": round(dist)}
 

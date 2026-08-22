@@ -16,7 +16,7 @@ type LeaveRow = { id: string; employee_id: string; leave_type: string; status: s
 export default function Attendance() {
   const { profile } = useAuth()
   const isAdmin = profile?.role === 'admin'
-  const gf = useGeofence(!isAdmin)
+  const { gf } = useGeofence(!isAdmin)
   const [rows, setRows] = useState<AttRow[]>([])
   const [leaves, setLeaves] = useState<LeaveRow[]>([])
 
@@ -92,7 +92,7 @@ export default function Attendance() {
                     {isAdmin && <td className="py-2 font-medium text-slate-700">{a.profiles?.full_name}</td>}
                     <td className="py-2 text-slate-500">{a.date}</td>
                     <td className="py-2 text-slate-500">{a.entry_time ? new Date(a.entry_time).toLocaleTimeString() : '—'}</td>
-                    <td className="py-2">{a.entry_time ? <Badge color="indigo">Fingerprint</Badge> : '—'}</td>
+                    <td className="py-2">{a.entry_time ? <Badge color={a.entry_source === 'gps_geofence' ? 'blue' : 'slate'}>{a.entry_source === 'gps_geofence' ? 'GPS' : 'Fingerprint (legacy)'}</Badge> : '—'}</td>
                     <td className="py-2 text-slate-500">{a.exit_time ? new Date(a.exit_time).toLocaleTimeString() : '—'}</td>
                     <td className="py-2">{a.exit_time ? <Badge color="blue">GPS Auto-Detected</Badge> : '—'}</td>
                     <td className="py-2">

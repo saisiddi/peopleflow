@@ -6,6 +6,7 @@ export type GeofenceState = {
   distance_m?: number
   confirm_by?: string
   exit_time?: string
+  checked_in?: boolean
   error?: string
 }
 
@@ -19,6 +20,7 @@ export function useGeofence(enabled: boolean) {
   const [gf, setGf] = useState<GeofenceState>({ state: 'no_data' })
   const stateRef = useRef<GeofenceState>({ state: 'no_data' })
   const timer = useRef<number | null>(null)
+  const locateRef = useRef<() => void>(() => {})
 
   useEffect(() => {
     if (!enabled) return
@@ -45,6 +47,7 @@ export function useGeofence(enabled: boolean) {
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
       )
     }
+    locateRef.current = locate
 
     const schedule = () => {
       const delay = stateRef.current.state === 'pending_exit' ? 25000 : 75000
@@ -60,7 +63,7 @@ export function useGeofence(enabled: boolean) {
     }
   }, [enabled])
 
-  return gf
+  return { gf, pingNow: () => locateRef.current() }
 }
 
 export function GeofenceIndicator({ gf }: { gf: GeofenceState }) {
