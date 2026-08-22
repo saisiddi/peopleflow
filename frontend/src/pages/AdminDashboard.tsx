@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import { Card, Button, Input, Badge, StatusBadge } from '../components/ui'
 
 type Profile = { id: string; full_name: string; employee_id: string; email: string; role: string; department?: string }
-type LeaveRow = { id: string; leave_type: string; status: string; start_date: string; end_date: string; employee_id: string; profiles?: { full_name: string } }
+type LeaveRow = { id: string; leave_type: string; status: string; start_date: string; end_date: string; employee_id: string; remarks?: string; profiles?: { full_name: string } }
 type AttRow = { id: string; date: string; status: string; entry_time: string | null; entry_source: string; exit_time: string | null; exit_source: string; employee_id: string; profiles?: { full_name: string } }
 
 export default function AdminDashboard() {
@@ -140,6 +140,7 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-sm font-medium text-slate-700">{l.profiles?.full_name}</p>
                     <p className="text-xs text-slate-400 capitalize">{l.leave_type} · {l.start_date} → {l.end_date}</p>
+                    {l.remarks && <p className="text-xs text-slate-500 italic mt-0.5">“{l.remarks}”</p>}
                   </div>
                   <div className="flex gap-2">
                     <Button variant="success" onClick={async () => {

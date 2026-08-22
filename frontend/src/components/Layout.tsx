@@ -22,6 +22,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           </Link>
           <nav className="flex items-center gap-1">
             {isAdmin && <NavLink to="/admin" className={link} end>Overview</NavLink>}
+            {isAdmin && <NavLink to="/geofence" className={link}>Geofence</NavLink>}
             <NavLink to="/attendance" className={link}>Attendance</NavLink>
             <NavLink to="/leave" className={link}>Leave</NavLink>
             <NavLink to="/payroll" className={link}>Payroll</NavLink>

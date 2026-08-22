@@ -181,6 +181,12 @@ class PayrollPatch(BaseModel):
     deductions: Optional[float] = None
 
 
+class OfficeLocationIn(BaseModel):
+    lat: float
+    lng: float
+    radius_meters: int = 150
+
+
 # ---------- auth ----------
 
 @app.post("/auth/signup")
@@ -542,6 +548,23 @@ def patch_payroll(employee_id: str, body: PayrollPatch, user: dict = Depends(req
             }
         ).eq("id", rows[0]["id"]).execute()
     return {"ok": True, "net_salary": net}
+
+
+# ---------- office geofence ----------
+
+@app.get("/office-location")
+def get_office_location(user: dict = Depends(get_current_user)):
+    return get_office()
+
+
+@app.patch("/office-location")
+def update_office_location(body: OfficeLocationIn, user: dict = Depends(require_admin)):
+    if not (50 <= body.radius_meters <= 2000):
+        raise HTTPException(400, "radius_meters must be between 50 and 2000")
+    sb.table("office_location").update(
+        {"lat": body.lat, "lng": body.lng, "radius_meters": body.radius_meters}
+    ).eq("id", 1).execute()
+    return {"ok": True}
 
 
 # ---------- background finalize loop (cron substitute for the demo) ----------

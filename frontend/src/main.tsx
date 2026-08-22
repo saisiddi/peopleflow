@@ -7,6 +7,7 @@ import Auth from './pages/Auth'
 import EmployeeDashboard from './pages/EmployeeDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import EmployeeDetail from './pages/EmployeeDetail'
+import Geofence from './pages/Geofence'
 import Attendance from './pages/Attendance'
 import Leave from './pages/Leave'
 import ProfilePage from './pages/ProfilePage'
@@ -33,11 +34,18 @@ function AppRoutes() {
     <Routes>
       <Route
         path="/"
-        element={profile ? <Navigate to="/dashboard" replace /> : <Auth />}
+        element={
+          profile ? (
+            <Navigate to={profile.role === 'admin' ? '/admin' : '/dashboard'} replace />
+          ) : (
+            <Auth />
+          )
+        }
       />
       <Route path="/dashboard" element={<Protected><Layout><EmployeeDashboard /></Layout></Protected>} />
       <Route path="/admin" element={<Protected adminOnly><Layout><AdminDashboard /></Layout></Protected>} />
       <Route path="/admin/employee/:id" element={<Protected adminOnly><Layout><EmployeeDetail /></Layout></Protected>} />
+      <Route path="/geofence" element={<Protected adminOnly><Layout><Geofence /></Layout></Protected>} />
       <Route path="/attendance" element={<Protected><Layout><Attendance /></Layout></Protected>} />
       <Route path="/leave" element={<Protected><Layout><Leave /></Layout></Protected>} />
       <Route path="/profile" element={<Protected><Layout><ProfilePage /></Layout></Protected>} />

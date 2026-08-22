@@ -153,8 +153,8 @@ export default function Leave() {
       <Card>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-slate-800">
-            {isAdmin ? 'All requests' : 'My requests'}
-            <span className="text-xs font-normal text-slate-400 ml-2">updates live — no refresh needed</span>
+            {isAdmin ? 'All requests' : 'My requests'}{' '}
+            <span className="text-xs font-normal text-slate-400">updates live — no refresh needed</span>
           </h2>
           <Select value={filter} onChange={(e) => setFilter(e.target.value)} className="!w-36">
             <option value="all">All</option>
